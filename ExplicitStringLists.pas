@@ -1,6 +1,7 @@
 // add custom sort capability
 // implemt BOM
 // add endiannes select
+// implement delimited text
 unit ExplicitStringLists;
 
 {$INCLUDE '.\ExplicitStringLists_defs.inc'}

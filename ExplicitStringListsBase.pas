@@ -29,14 +29,12 @@ type
     fDuplicates:        TDuplicates;
     fSorted:            Boolean;
     Function GetUpdating: Boolean;
-    procedure SetUpdateState({%H-}Updating: Boolean); virtual;
-    procedure Error(const Msg: string; Data: array of const); virtual;
-    procedure Grow(Delta: Integer = 1); virtual; abstract;
-    Function CheckIndex(Index: Integer): Boolean; virtual; abstract;
     Function CompareItems(Index1,Index2: Integer): Integer; virtual; abstract;
     procedure WriteItemToStream(Stream: TStream; Index: Integer); virtual; abstract;
     procedure WriteLineBreakToStream(Stream: TStream); virtual; abstract;
-    procedure WriteBOMToStream(Stream: TStream); virtual; abstract; 
+    procedure WriteBOMToStream(Stream: TStream); virtual; abstract;
+    procedure SetUpdateState({%H-}Updating: Boolean); virtual;
+    procedure Error(const Msg: string; Data: array of const); virtual;
     procedure DoChange; virtual;
     procedure DoChanging; virtual;
   public
@@ -45,11 +43,7 @@ type
     Function EndUpdate: Integer; virtual;
     Function LowIndex: Integer; virtual; abstract;
     Function HighIndex: Integer; virtual; abstract;
-    procedure Move(SrcIdx, DstIdx: Integer); virtual; abstract;
     procedure Exchange(Idx1, Idx2: Integer); virtual; abstract;
-    procedure Delete(Index: Integer); virtual; abstract;
-    procedure Clear; virtual; abstract;
-    procedure Reverse; virtual; abstract;
     procedure Sort(Reversed: Boolean = False); virtual;
     procedure LoadFromStream(Stream: TStream); virtual; abstract;
     procedure LoadFromFile(const FileName: String); virtual;
@@ -159,7 +153,7 @@ begin
 Dec(fUpdateCount);
 If fUpdateCount = 0 then
   begin
-    SetUpdateState(True);
+    SetUpdateState(False);
     If fChanged then DoChange;
     fChanged := False;
   end;

@@ -17,8 +17,8 @@
     procedure SetDelimitedText(Value: {$I ESL_StringType.inc});
     Function GetCommaText: {$I ESL_StringType.inc};
     procedure SetCommaText(Value: {$I ESL_StringType.inc});
-    procedure Grow(Delta: Integer = 1); override;
-    Function CheckIndex(Index: Integer): Boolean; override;
+    procedure Grow(Delta: Integer = 1); virtual;
+    Function CheckIndex(Index: Integer): Boolean; virtual;
     Function CompareItems(Index1,Index2: Integer): Integer; override;
     Function CompareStrings(const Str1, Str2: {$I ESL_StringType.inc}): Integer; virtual;
     Function IndexForSortedAddition(const Str: {$I ESL_StringType.inc}): Integer; virtual;
@@ -47,13 +47,13 @@
     procedure AddStringsDef(Strings: array of String); overload; virtual;
     procedure Append(const Str: {$I ESL_StringType.inc}); virtual;
     procedure Insert(const Str: {$I ESL_StringType.inc}; Index: Integer); virtual;
-    procedure Move(SrcIdx, DstIdx: Integer); override;
+    procedure Move(SrcIdx, DstIdx: Integer); virtual;
     procedure Exchange(Idx1, Idx2: Integer); override;
     Function Extract(const Str: {$I ESL_StringType.inc}): {$I ESL_StringType.inc}; virtual;
     Function Remove(const Str: {$I ESL_StringType.inc}): Integer; virtual;
-    procedure Delete(Index: Integer); override;
-    procedure Clear; override;
-    procedure Reverse; override;
+    procedure Delete(Index: Integer); virtual;
+    procedure Clear; virtual;
+    procedure Reverse; virtual;
     Function Equals(Strings: {$I ESL_ListType.inc}): Boolean; reintroduce; virtual;
     procedure SetStrings(Strings: {$I ESL_ListType.inc}); overload; virtual;
     procedure SetStrings(Strings: TStrings); overload; virtual;
@@ -232,7 +232,7 @@ end;
 
 Function {$I ESL_ListType.inc}.GetDelimitedText: {$I ESL_StringType.inc};
 begin
-{$message 'implement'}
+//{$message 'implement'}
 Result := '';
 end;
 
@@ -240,7 +240,7 @@ end;
 
 procedure {$I ESL_ListType.inc}.SetDelimitedText(Value: {$I ESL_StringType.inc});
 begin
-{$message 'implement'}
+//{$message 'implement'}
 Value := '';
 end;
 

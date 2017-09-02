@@ -5,7 +5,7 @@ unit ExplicitStringListsA;
 interface
 
 uses
-  SysUtils, Classes, AuxTypes, ExplicitStringListsBase;
+  Classes, AuxTypes, ExplicitStringListsBase;
 
 {$DEFINE ESL_Declaration}
 
@@ -36,7 +36,7 @@ uses
 {$IF not Defined(FPC) and (CompilerVersion >= 20)}
   (* Delphi2009+ *) Windows, AnsiStrings,
 {$IFEND}
-  StrRect;
+  SysUtils, StrRect;
 
 {$DEFINE ESL_Implementation}
 
