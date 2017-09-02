@@ -17,6 +17,7 @@
     procedure SetDelimitedText(Value: {$I ESL_StringType.inc});
     Function GetCommaText: {$I ESL_StringType.inc};
     procedure SetCommaText(Value: {$I ESL_StringType.inc});
+
     procedure Grow(Delta: Integer = 1); virtual;
     Function CheckIndex(Index: Integer): Boolean; virtual;
     Function CompareItems(Index1,Index2: Integer): Integer; override;
@@ -46,7 +47,7 @@
     procedure AddStringsDef(Strings: TStrings); overload; virtual;
     procedure AddStringsDef(Strings: array of String); overload; virtual;
     procedure Append(const Str: {$I ESL_StringType.inc}); virtual;
-    procedure Insert(const Str: {$I ESL_StringType.inc}; Index: Integer); virtual;
+    procedure Insert(Index: Integer; const Str: {$I ESL_StringType.inc}); virtual;
     procedure Move(SrcIdx, DstIdx: Integer); virtual;
     procedure Exchange(Idx1, Idx2: Integer); override;
     Function Extract(const Str: {$I ESL_StringType.inc}): {$I ESL_StringType.inc}; virtual;
@@ -762,7 +763,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.Insert(const Str: {$I ESL_StringType.inc}; Index: Integer);
+procedure {$I ESL_ListType.inc}.Insert(Index: Integer; const Str: {$I ESL_StringType.inc});
 var
   i:  Integer;
 begin
@@ -854,7 +855,8 @@ end;
 
 Function {$I ESL_ListType.inc}.Remove(const Str: {$I ESL_StringType.inc}): Integer;
 begin
-If Find(Str,Result) then
+Result := IndexOf(Str);
+If Result >= 0 then
   Delete(Result);
 end;
 

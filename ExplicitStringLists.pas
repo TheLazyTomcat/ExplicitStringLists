@@ -1,7 +1,13 @@
-// add custom sort capability
-// implemt BOM
-// add endiannes select
-// implement delimited text
+{
+  todo:
+  
+    - add custom sort capability
+    - implemt BOM
+    - add endiannes select
+    - implement delimited text property
+    - more effective (and also working in case of ShortString) LoadFromStream
+    - some methods can be class merhods
+}
 unit ExplicitStringLists;
 
 {$INCLUDE '.\ExplicitStringLists_defs.inc'}
