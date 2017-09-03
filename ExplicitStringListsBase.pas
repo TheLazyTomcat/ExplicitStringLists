@@ -15,6 +15,8 @@ Function UTF8ToString(const Str: UTF8String): UnicodeString;{$IFDEF CanInline} i
 type
   EExplicitStringListError = Exception;
 
+  TStringEndianness = (seSystem,seLittle,seBig);
+
   TExplicitStringList = class(TPersistent)
   private
     fOnChanging:  TNotifyEvent;
@@ -30,13 +32,15 @@ type
     fSorted:            Boolean;
     Function GetUpdating: Boolean;
     Function CompareItems(Index1,Index2: Integer): Integer; virtual; abstract;
-    procedure WriteItemToStream(Stream: TStream; Index: Integer); virtual; abstract;
-    procedure WriteLineBreakToStream(Stream: TStream); virtual; abstract;
-    procedure WriteBOMToStream(Stream: TStream); virtual; abstract;
+    procedure WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TStringEndianness); virtual; abstract;
+    procedure WriteLineBreakToStream(Stream: TStream; Endianness: TStringEndianness); virtual; abstract;
+    procedure WriteBOMToStream(Stream: TStream; Endianness: TStringEndianness); virtual; abstract;
     procedure SetUpdateState({%H-}Updating: Boolean); virtual;
     procedure Error(const Msg: string; Data: array of const); virtual;
     procedure DoChange; virtual;
     procedure DoChanging; virtual;
+    Function GetSystemEndianness: TStringEndianness; virtual;
+    procedure WideSwapEndian(Data: PWideChar; Count: Integer); virtual;
   public
     constructor Create;
     Function BeginUpdate: Integer; virtual;
@@ -45,10 +49,17 @@ type
     Function HighIndex: Integer; virtual; abstract;
     procedure Exchange(Idx1, Idx2: Integer); virtual; abstract;
     procedure Sort(Reversed: Boolean = False); virtual;
-    procedure LoadFromStream(Stream: TStream); virtual; abstract;
-    procedure LoadFromFile(const FileName: String); virtual;
-    procedure SaveToStream(Stream: TStream; WriteBOM: Boolean = True); virtual;
-    procedure SaveToFile(const FileName: String; WriteBOM: Boolean = True); virtual;
+    procedure LoadFromStream(Stream: TStream; out Endianness: TStringEndianness); overload; virtual; abstract;
+    procedure LoadFromStream(Stream: TStream); overload; virtual;
+    procedure LoadFromFile(const FileName: String; out Endianness: TStringEndianness); overload; virtual;
+    procedure LoadFromFile(const FileName: String); overload; virtual;
+  {
+    BOM is writtend only for UTF8-, Wide- and UnicodeStrings.
+    Endiannes affects Wide- and UnicodeStrings, it has no meaning for single-byte
+    strings.
+  }
+    procedure SaveToStream(Stream: TStream; WriteBOM: Boolean = True; Endianness: TStringEndianness = seSystem); virtual;
+    procedure SaveToFile(const FileName: String; WriteBOM: Boolean = True; Endianness: TStringEndianness = seSystem); virtual;
   published
     property Count: Integer read fCount;
     property UpdateCount: Integer read fUpdateCount;
@@ -115,6 +126,26 @@ If fUpdateCount <= 0 then
       fOnChange(Self);
   end
 else fChanged := True;
+end;
+
+//------------------------------------------------------------------------------
+
+Function TExplicitStringList.GetSystemEndianness: TStringEndianness;
+begin
+Result := {$IFDEF ENDIAN_BIG}seBig{$ELSE}seLittle{$ENDIF};
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.WideSwapEndian(Data: PWideChar; Count: Integer);
+var
+  i:  Integer;
+begin
+For i := 0 to Pred(Count) do
+  begin
+    PUInt16(Data)^ := UInt16(PUInt16(Data)^ shr 8) or UInt16(PUInt16(Data)^ shl 8);
+    Inc(Data);
+  end;
 end;
 
 //==============================================================================
@@ -203,13 +234,22 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TExplicitStringList.LoadFromFile(const FileName: String);
+procedure TExplicitStringList.LoadFromStream(Stream: TStream);
+var
+  Endianness: TStringEndianness;
+begin
+LoadFromStream(Stream,Endianness);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.LoadFromFile(const FileName: String; out Endianness: TStringEndianness);
 var
   FileStream: TFileStream;
 begin
 FileStream := TFileStream.Create(StrToRTL(FileName),fmOpenRead or fmShareDenyWrite);
 try
-  LoadFromStream(FileStream);
+  LoadFromStream(FileStream,Endianness);
 finally
   FileStream.Free;
 end;
@@ -217,29 +257,38 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TExplicitStringList.SaveToStream(Stream: TStream; WriteBOM: Boolean = True);
+procedure TExplicitStringList.LoadFromFile(const FileName: String);
+var
+  Endianness: TStringEndianness;
+begin
+LoadFromFile(FileName,Endianness);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.SaveToStream(Stream: TStream; WriteBOM: Boolean = True; Endianness: TStringEndianness = seSystem);
 var
   i:  Integer;
 begin
 If WriteBOM then
-  WriteBOMToStream(Stream);
+  WriteBOMToStream(Stream,Endianness);
 For i := LowIndex to HighIndex do
   begin
-    WriteItemToStream(Stream,i);
+    WriteItemToStream(Stream,i,Endianness);
     If (i < HighIndex) or fTrailingLineBreak then
-      WriteLineBreakToStream(Stream);
+      WriteLineBreakToStream(Stream,Endianness);
   end;
 end;
 
 //------------------------------------------------------------------------------
 
-procedure TExplicitStringList.SaveToFile(const FileName: String; WriteBOM: Boolean = True);
+procedure TExplicitStringList.SaveToFile(const FileName: String; WriteBOM: Boolean = True; Endianness: TStringEndianness = seSystem);
 var
   FileStream: TFileStream;
 begin
 FileStream := TFileStream.Create(StrToRTL(FileName),fmCreate or fmShareDenyWrite);
 try
-  SaveToStream(FileStream, WriteBOM);
+  SaveToStream(FileStream,WriteBOM,Endianness);
 finally
   FileStream.Free;
 end;

@@ -24,9 +24,9 @@
     Function CompareStrings(const Str1, Str2: {$I ESL_StringType.inc}): Integer; virtual;
     Function IndexForSortedAddition(const Str: {$I ESL_StringType.inc}): Integer; virtual;
     Function IsBreak(C: {$I ESL_CharType.inc}): Boolean; virtual;
-    procedure WriteItemToStream(Stream: TStream; Index: Integer); override;
-    procedure WriteLineBreakToStream(Stream: TStream); override;
-    procedure WriteBOMToStream({%H-}Stream: TStream); override;
+    procedure WriteItemToStream(Stream: TStream; Index: Integer; {%H-}Endianness: TStringEndianness); override;
+    procedure WriteLineBreakToStream(Stream: TStream; {%H-}Endianness: TStringEndianness); override;
+    procedure WriteBOMToStream({%H-}Stream: TStream; {%H-}Endianness: TStringEndianness); override;
     procedure AssignTo(Dest: TPersistent); override;
     Function ConvertStringTo(const Str: String): {$I ESL_StringType.inc}; virtual;
     Function ConvertStringFrom(const Str: {$I ESL_StringType.inc}): String; virtual;
@@ -60,7 +60,7 @@
     procedure SetStrings(Strings: TStrings); overload; virtual;
     procedure SetStringsDef(Strings: TStrings); virtual;
     procedure Assign(Source: TPersistent); override;
-    procedure LoadFromStream(Stream: TStream); override;
+    procedure LoadFromStream(Stream: TStream; out {%H-}Endianness: TStringEndianness); override;
     property Items[Index: Integer]: {$I ESL_StringType.inc} read GetItem write SetItem; default;
     property Strings[Index: Integer]: String read GetString write SetString;
   published
@@ -447,7 +447,7 @@ Function {$I ESL_ListType.inc}.IsBreak(C: {$I ESL_CharType.inc}): Boolean;
 begin
 {$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
 If Ord(C) <= 255 then
-  Result := AnsiChar(C) in [#0,#10,#13] // do not replace AnsiChar
+  Result := Ord(C) in [0,10,13]
 else
   Result := False;
 {$ELSE}
@@ -457,35 +457,90 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.WriteItemToStream(Stream: TStream; Index: Integer);
+procedure {$I ESL_ListType.inc}.WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TStringEndianness);
+{$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
+var
+  Temp: UnicodeString;
+{$IFEND}
 begin
 If CheckIndex(Index) then
-{$IFDEF ESL_Short}
-  Stream.WriteBuffer(fStrings[Index][1],Length(fStrings[Index]) * SizeOf({$I ESL_CharType.inc}))
-{$ELSE}
-  Stream.WriteBuffer({$I ESL_PCharType.inc}(fStrings[Index])^,Length(fStrings[Index]) * SizeOf({$I ESL_CharType.inc}))
-{$ENDIF}
-else
-  Error('WriteItem: Index (%d) out of bounds.',[Index]);
+  begin
+    If Length(fStrings[Index]) > 0 then
+      begin
+      {$IF Defined(ESL_Short)}
+        Stream.WriteBuffer(fStrings[Index][1],Length(fStrings[Index]) * SizeOf({$I ESL_CharType.inc}));
+      {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
+        If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
+          begin
+            Temp := fStrings[Index];
+            WideSwapEndian(PWideChar(Temp),Length(Temp));
+            Stream.WriteBuffer({$I ESL_PCharType.inc}(Temp)^,Length(Temp) * SizeOf({$I ESL_CharType.inc}));
+          end
+        else Stream.WriteBuffer({$I ESL_PCharType.inc}(fStrings[Index])^,Length(fStrings[Index]) * SizeOf({$I ESL_CharType.inc}));
+      {$ELSE}
+        Stream.WriteBuffer({$I ESL_PCharType.inc}(fStrings[Index])^,Length(fStrings[Index]) * SizeOf({$I ESL_CharType.inc}));
+      {$IFEND}
+      end;
+  end
+else Error('WriteItem: Index (%d) out of bounds.',[Index]);
 end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.WriteLineBreakToStream(Stream: TStream);
+procedure {$I ESL_ListType.inc}.WriteLineBreakToStream(Stream: TStream; Endianness: TStringEndianness);
+{$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
+var
+  Temp: UnicodeString;
+{$IFEND}
 begin
 If Length(fLineBreak) > 0 then
-{$IFDEF ESL_Short}
-  Stream.WriteBuffer(fLineBreak[1],Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
-{$ELSE}
-  Stream.WriteBuffer({$I ESL_PCharType.inc}(fLineBreak)^,Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
-{$ENDIF}
+  begin
+  {$IF Defined(ESL_Short)}
+    Stream.WriteBuffer(fLineBreak[1],Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
+  {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
+    If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
+      begin
+        Temp := fLineBreak;
+        WideSwapEndian(PWideChar(Temp),Length(Temp));
+        Stream.WriteBuffer({$I ESL_PCharType.inc}(Temp)^,Length(Temp) * SizeOf({$I ESL_CharType.inc}));
+      end
+    else Stream.WriteBuffer({$I ESL_PCharType.inc}(fLineBreak)^,Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
+  {$ELSE}
+    Stream.WriteBuffer({$I ESL_PCharType.inc}(fLineBreak)^,Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
+  {$IFEND}
+  end;
 end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.WriteBOMToStream(Stream: TStream);
+procedure {$I ESL_ListType.inc}.WriteBOMToStream(Stream: TStream; Endianness: TStringEndianness);
+{$IF Defined(ESL_UTF8) or Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
+var
+  Buff: array[0..2] of Byte;
+{$IFEND}
 begin
-// no BOM for ANSI
+{$IF Defined(ESL_UTF8)}
+  Buff[0] := $EF;
+  Buff[1] := $BB;
+  Buff[2] := $BF;
+  Stream.WriteBuffer(Buff,3);
+{$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
+  If Endianness = seSystem then
+    Endianness := GetSystemEndianness;
+  case Endianness of
+    seLittle: begin
+                Buff[0] := $FF;
+                Buff[1] := $FE;
+              end;
+    seBig:    begin
+                Buff[0] := $FE;
+                Buff[1] := $FF;
+              end;
+  else
+    Error('WriteBOMToStream: Unknonw endianness (%d).',[Ord(Endianness)]);
+  end;
+  Stream.WriteBuffer(Buff,2);
+{$IFEND}
 end;
 
 //------------------------------------------------------------------------------
@@ -1015,7 +1070,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.LoadFromStream(Stream: TStream);
+procedure {$I ESL_ListType.inc}.LoadFromStream(Stream: TStream; out Endianness: TStringEndianness);
 var
   Buffer: {$I ESL_StringType.inc};
 begin
@@ -1028,6 +1083,7 @@ If Stream.Position < Stream.Size then
     Stream.ReadBuffer({$I ESL_PCharType.inc}(Buffer)^,Length(Buffer) * SizeOf({$I ESL_CharType.inc}));
   {$ENDIF}
     SetText(Buffer);
+    fSorted := False;
   end;
 end;
 

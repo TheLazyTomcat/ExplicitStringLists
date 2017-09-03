@@ -2,11 +2,10 @@
   todo:
   
     - add custom sort capability
-    - implemt BOM
-    - add endiannes select
     - implement delimited text property
-    - more effective (and also working in case of ShortString) LoadFromStream
-    - some methods can be class merhods
+    - more effective (and also working in case of ShortString) LoadFromStream (parse BOM)
+    - some methods can be class methods
+    - re-arrange some methods
 }
 unit ExplicitStringLists;
 
@@ -18,8 +17,6 @@ uses
   ExplicitStringListsBase, ExplicitStringListsA, ExplicitStringListsW;
 
 type
-  EExplicitStringListError = ExplicitStringListsBase.EExplicitStringListError;
-
   TExplicitStringList = ExplicitStringListsBase.TExplicitStringList;
 
   TShortStringList = ExplicitStringListsA.TShortStringList;
