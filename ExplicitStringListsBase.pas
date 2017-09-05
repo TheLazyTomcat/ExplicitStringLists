@@ -12,10 +12,16 @@ Function UTF8ToString(const Str: UTF8String): UnicodeString;{$IFDEF CanInline} i
 {$DEFINE UTF8ToString_Implement}
 {$IFEND}
 
+const
+  def_Delimiter = ',';
+  def_LineBreak = sLineBreak;
+  def_QuoteChar = '"';
+
 type
   EExplicitStringListError = Exception;
 
   TStringEndianness = (seSystem,seLittle,seBig);
+  TLineBreakStyle = (lbsWIN,lbsUNIX,lbsMAC);
 
   TExplicitStringList = class(TPersistent)
   private
@@ -54,7 +60,7 @@ type
     procedure LoadFromFile(const FileName: String; out Endianness: TStringEndianness); overload; virtual;
     procedure LoadFromFile(const FileName: String); overload; virtual;
   {
-    BOM is writtend only for UTF8-, Wide- and UnicodeStrings.
+    BOM is written only for UTF8-, Wide- and UnicodeStrings.
     Endiannes affects Wide- and UnicodeStrings, it has no meaning for single-byte
     strings.
   }

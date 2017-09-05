@@ -164,7 +164,7 @@ Len := 0;
 For i := LowIndex to HighIndex do
   Inc(Len,Length(fStrings[i]));
 Inc(Len,fCount * Length(fLineBreak));
-If TrailingLineBreak then
+If not TrailingLineBreak then
   Dec(Len,Length(fLineBreak));
 // preallocate
 SetLength(Result,Len);
@@ -233,7 +233,7 @@ end;
 
 Function {$I ESL_ListType.inc}.GetDelimitedText: {$I ESL_StringType.inc};
 begin
-//{$message 'implement'}
+{$message 'implement'}
 Result := '';
 end;
 
@@ -241,7 +241,7 @@ end;
 
 procedure {$I ESL_ListType.inc}.SetDelimitedText(Value: {$I ESL_StringType.inc});
 begin
-//{$message 'implement'}
+{$message 'implement'}
 Value := '';
 end;
 
@@ -255,6 +255,8 @@ begin
 OldDelimiter := fDelimiter;
 OldQuoteChar := fQuoteChar;
 try
+  fDelimiter := def_Delimiter;
+  fQuoteChar := def_QuoteChar;
   Result := GetDelimitedText;
 finally
   fDelimiter := OldDelimiter;
@@ -272,6 +274,8 @@ begin
 OldDelimiter := fDelimiter;
 OldQuoteChar := fQuoteChar;
 try
+  fDelimiter := def_Delimiter;
+  fQuoteChar := def_QuoteChar;
   SetDelimitedText(Value);
 finally
   fDelimiter := OldDelimiter;
@@ -432,7 +436,7 @@ If fSorted then
             else If D > 0 then
               L := M + 1
             else
-              Break{L <= R};
+              Break;
           end;
         Result := Succ(M);
       end
@@ -445,14 +449,7 @@ end;
 
 Function {$I ESL_ListType.inc}.IsBreak(C: {$I ESL_CharType.inc}): Boolean;
 begin
-{$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
-If Ord(C) <= 255 then
-  Result := Ord(C) in [0,10,13]
-else
-  Result := False;
-{$ELSE}
-Result := C in [#0,#10,#13];
-{$IFEND}
+Result := Ord(C) in [0,10,13];
 end;
 
 //------------------------------------------------------------------------------
@@ -514,32 +511,26 @@ end;
 //------------------------------------------------------------------------------
 
 procedure {$I ESL_ListType.inc}.WriteBOMToStream(Stream: TStream; Endianness: TStringEndianness);
-{$IF Defined(ESL_UTF8) or Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
-var
-  Buff: array[0..2] of Byte;
-{$IFEND}
 begin
 {$IF Defined(ESL_UTF8)}
-  Buff[0] := $EF;
-  Buff[1] := $BB;
-  Buff[2] := $BF;
-  Stream.WriteBuffer(Buff,3);
+  Stream_WriteUInt8(Stream,$EF);
+  Stream_WriteUInt8(Stream,$BB);
+  Stream_WriteUInt8(Stream,$BF);
 {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
   If Endianness = seSystem then
     Endianness := GetSystemEndianness;
   case Endianness of
     seLittle: begin
-                Buff[0] := $FF;
-                Buff[1] := $FE;
+                Stream_WriteUInt8(Stream,$FF);
+                Stream_WriteUInt8(Stream,$FE);
               end;
     seBig:    begin
-                Buff[0] := $FE;
-                Buff[1] := $FF;
+                Stream_WriteUInt8(Stream,$FE);
+                Stream_WriteUInt8(Stream,$FF);
               end;
   else
     Error('WriteBOMToStream: Unknonw endianness (%d).',[Ord(Endianness)]);
   end;
-  Stream.WriteBuffer(Buff,2);
 {$IFEND}
 end;
 
@@ -617,9 +608,9 @@ constructor {$I ESL_ListType.inc}.Create;
 begin
 inherited;
 SetLength(fStrings,0);
-fDelimiter := ',';
-fLineBreak := {$I ESL_StringType.inc}(sLineBreak);
-fQuoteChar := '"';
+fDelimiter := def_Delimiter;
+fLineBreak := {$I ESL_StringType.inc}(def_LineBreak);
+fQuoteChar := def_QuoteChar;
 end;
 
 //------------------------------------------------------------------------------
@@ -1071,20 +1062,120 @@ end;
 //------------------------------------------------------------------------------
 
 procedure {$I ESL_ListType.inc}.LoadFromStream(Stream: TStream; out Endianness: TStringEndianness);
+const
+  BufferSize = $10000;  // 64KiB buffer
 var
-  Buffer: {$I ESL_StringType.inc};
-begin
-If Stream.Position < Stream.Size then
+{$DEFINE ESL_SHelper}
+  Buffer:     Pointer;
+  TempStr:    {$I ESL_StringType.inc};
+  TempStrLen: Integer;
+  BytesRead:  Integer;
+  CharsRead:  Integer;
+  i:          Integer;
+  NewLine:    Boolean;
+
+  Function BreakPos(const Str: {$I ESL_StringType.inc}; Start: Integer = 1): Integer;
+  var
+    ii: Integer;
   begin
-    SetLength(Buffer,(Stream.Size - Stream.Position) div SizeOf({$I ESL_CharType.inc}));
-  {$IFDEF ESL_Short}
-    Stream.ReadBuffer(Buffer[1],Length(Buffer) * SizeOf({$I ESL_CharType.inc}));
-  {$ELSE}
-    Stream.ReadBuffer({$I ESL_PCharType.inc}(Buffer)^,Length(Buffer) * SizeOf({$I ESL_CharType.inc}));
-  {$ENDIF}
-    SetText(Buffer);
-    fSorted := False;
+    Result := 0;
+    For ii := Start to Length(Str) do
+      If IsBreak(Str[ii]) then
+        begin
+          Result := ii;
+          Break{For ii};
+        end;
   end;
+{$UNDEF ESL_SHelper}
+begin
+Endianness := seSystem;
+BeginUpdate;
+try
+  Clear;
+  If Stream.Position < Stream.Size then // is there anything to read?
+    begin
+      GetMem(Buffer,BufferSize);
+      try
+      {$IF Defined(ESL_UTF8)}
+        // read BOM if present
+        If Stream.Size - Stream.Position >= 3{length of UTF8 BOM} then
+          begin
+            If Stream_ReadUInt8(Stream) <> $EF then
+              Stream.Seek(-1,soCurrent)
+            else If Stream_ReadUInt8(Stream) <> $BB then
+              Stream.Seek(-2,soCurrent)
+            else If Stream_ReadUInt8(Stream) <> $BF then
+              Stream.Seek(-3,soCurrent);
+          end;
+      {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
+        // read BOM and set endianness accordint to it
+        If Stream.Size - Stream.Position >= 2{length of UTF16 BOM} then
+          begin
+            case Stream_ReadUInt16(Stream) of
+              $FFFE:  If GetSystemEndianness = seLittle then Endianness := seBig
+                        else Endianness := seLittle;
+              $FEFF:  Endianness := GetSystemEndianness;
+            else
+              Stream.Seek(-2,soCurrent);
+            end;
+          end;
+      {$IFEND}
+        TempStr := '';
+        TempStrLen := 0;
+        NewLine := True;
+        while Stream.Position < Stream.Size do
+          begin
+            BytesRead := Stream.Read(Buffer^,BufferSize);
+            CharsRead := BytesRead div SizeOf({$I ESL_CharType.inc});
+            Stream.Seek(-(BytesRead mod SizeOf({$I ESL_CharType.inc})),soCurrent);
+            SetLength(TempStr,TempStrLen + CharsRead);
+            System.Move(Buffer^,TempStr[TempStrLen + 1],(Length(TempStr) - TempStrLen) * SizeOf({$I ESL_CharType.inc}));
+            TempStrLen := 0;
+            repeat
+              i := BreakPos(TempStr,TempStrLen + 1) - 1;
+              If i >= 0 then
+                begin
+                  If NewLine then
+                    begin
+                      NewLine := False;
+                      Add(Copy(TempStr,TempStrLen + 1,i - TempStrLen));
+                      TempStrLen := i;
+                    end;
+                  If (Length(TempStr) - i) >= 2 then
+                    begin
+                      If Ord(TempStr[TempStrLen + 1]) = 13 then
+                        begin
+                          Inc(TempStrLen);
+                          NewLine := True;
+                        end;
+                      If Ord(TempStr[TempStrLen + 1]) = 10 then
+                        begin
+                          Inc(TempStrLen);
+                          NewLine := True;
+                        end;
+                    end
+                  else i := -1;
+                end;
+            until i < 0;
+            System.Delete(TempStr,1,TempStrLen);
+            TempStrLen := Length(TempStr);
+          end;
+        If (Length(TempStr) > 0) and not IsBreak(TempStr[1]) then
+          Add(TempStr);
+      {$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
+        // correct endianness for current system
+        If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
+          For i := LowIndex to HighIndex do
+            WideSwapEndian(PWideChar(fStrings[i]),Length(fStrings[i]));
+      {$IFEND}
+        fSorted := False;
+		  finally
+        FreeMem(Buffer,BufferSize);
+		  end;
+		end;
+finally
+  EndUpdate;
+end
 end;
 
 {$ENDIF ESL_Implementation}

@@ -36,7 +36,7 @@ uses
 {$IF not Defined(FPC) and (CompilerVersion >= 20)}
   (* Delphi2009+ *) Windows, AnsiStrings,
 {$IFEND}
-  SysUtils, StrRect;
+  SysUtils, StrRect, BinaryStreaming;
 
 {$DEFINE ESL_Implementation}
 

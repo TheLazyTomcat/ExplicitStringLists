@@ -23,3 +23,5 @@
 {$UNDEF ESL_Wide}
 {$UNDEF ESL_Unicode}
 {$UNDEF ESL_Default}
+
+{$UNDEF ESL_SHelper}
