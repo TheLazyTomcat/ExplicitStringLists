@@ -40,17 +40,17 @@ uses
 
 {$DEFINE ESL_Implementation}
 
-  {$DEFINE ESL_Wide}
-    {$I ExplicitStringLists.inc}
-  {$UNDEF ESL_Wide}
+{$DEFINE ESL_Wide}
+  {$I ExplicitStringLists.inc}
+{$UNDEF ESL_Wide}
 
-  {$DEFINE ESL_Unicode}
-    {$I ExplicitStringLists.inc}
-  {$UNDEF ESL_Unicode}
+{$DEFINE ESL_Unicode}
+  {$I ExplicitStringLists.inc}
+{$UNDEF ESL_Unicode}
 
-  {$DEFINE ESL_Default}
-    {$I ExplicitStringLists.inc}
-  {$UNDEF ESL_Default}
+{$DEFINE ESL_Default}
+  {$I ExplicitStringLists.inc}
+{$UNDEF ESL_Default}
 
 {$UNDEF ESL_Implementation}
 

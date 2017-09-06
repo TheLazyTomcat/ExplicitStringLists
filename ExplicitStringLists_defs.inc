@@ -24,4 +24,5 @@
 {$UNDEF ESL_Unicode}
 {$UNDEF ESL_Default}
 
-{$UNDEF ESL_SHelper}
+{$UNDEF ESL_ShortHelper}
+{$UNDEF ESL_ShortDefault}

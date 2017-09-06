@@ -7,7 +7,7 @@
     - re-arrange some methods
     - for short, allow ansistring as large in/out
     - revisit implementation of Get/SetText for short strings
-    - add property LineBreakStype (write only, duh!)
+  * - add property LineBreakStype (write only, duh!)
     - check implementation when default string is shortstring
 }
 unit ExplicitStringLists;

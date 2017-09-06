@@ -8,6 +8,7 @@
     procedure SetItem(Index: Integer; const Value: {$I ESL_StringType.inc});
     Function GetString(Index: Integer): String;
     procedure SetString(Index: Integer; const Value: String);
+    procedure SetLineBreakStyle(Value: TLineBreakStyle);
     Function GetCapacity: Integer;
     procedure SetCapacity(Value: Integer);
     procedure SetSorted(Value: Boolean);
@@ -67,6 +68,7 @@
     property Capacity: Integer read GetCapacity write SetCapacity;
     property Delimiter: {$I ESL_CharType.inc} read fDelimiter write fDelimiter;
     property LineBreak: {$I ESL_StringType.inc} read fLineBreak write fLineBreak;
+    property LineBreakStyle: TLineBreakStyle write SetLineBreakStyle;
     property QuoteChar: {$I ESL_CharType.inc} read fQuoteChar write fQuoteChar;
     property Sorted: Boolean read fSorted write SetSorted;
     property Text: {$I ESL_StringType.inc} read GetText write SetText;
@@ -122,6 +124,19 @@ end;
 
 //------------------------------------------------------------------------------
 
+procedure {$I ESL_ListType.inc}.SetLineBreakStyle(Value: TLineBreakStyle);
+begin
+case Value of
+  lbsWIN,lbsCRLF: fLineBreak := {$I ESL_StringType.inc}(#13#10);
+  lbsUNIX,lbsLF:  fLineBreak := {$I ESL_StringType.inc}(#10);
+  lbsMAC,lbsCR:   fLineBreak := {$I ESL_StringType.inc}(#13);
+else
+  Error('SetLineBreakStyle: Invalid style (%d).',[Ord(Value)])
+end;
+end;
+
+//------------------------------------------------------------------------------
+
 Function {$I ESL_ListType.inc}.GetCapacity: Integer;
 begin
 Result := Length(fStrings);
@@ -164,16 +179,26 @@ Len := 0;
 For i := LowIndex to HighIndex do
   Inc(Len,Length(fStrings[i]));
 Inc(Len,fCount * Length(fLineBreak));
-If not TrailingLineBreak then
+If not TrailingLineBreak and (fCount > 0) then
   Dec(Len,Length(fLineBreak));
 // preallocate
-SetLength(Result,Len);
+{$IFDEF ESL_Short}
+If Len > High(ShortString) then
+  SetLength(Result,High(ShortString))
+else
+{$ENDIF}
+  SetLength(Result,Len);
 // store data
 Len := 1;
 For i := LowIndex to HighIndex do
   begin
   {$IFDEF ESL_Short}
-    System.Move(fStrings[i][1],Addr(Result[Len])^,Length(fStrings[i]) * SizeOf({$I ESL_CharType.inc}));
+    If (Len + Length(fStrings[i]) - 1) > Length(Result) then
+      begin
+        System.Move(fStrings[i][1],Addr(Result[Len])^,(Length(Result) - Len + 1) * SizeOf({$I ESL_CharType.inc}));
+        Break{For i};
+      end
+    else System.Move(fStrings[i][1],Addr(Result[Len])^,Length(fStrings[i]) * SizeOf({$I ESL_CharType.inc}));
   {$ELSE}
     System.Move({$I ESL_PCharType.inc}(fStrings[i])^,Addr(Result[Len])^,Length(fStrings[i]) * SizeOf({$I ESL_CharType.inc}));
   {$ENDIF}
@@ -181,7 +206,12 @@ For i := LowIndex to HighIndex do
     If (i < HighIndex) or TrailingLineBreak and (Length(fLineBreak) > 0) then
       begin
       {$IFDEF ESL_Short}
-        System.Move(fLineBreak[1],Addr(Result[Len])^,Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
+        If (Len + Length(fLineBreak) - 1) > Length(Result) then
+          begin
+            System.Move(fLineBreak[1],Addr(Result[Len])^,(Length(Result) - Len + 1) * SizeOf({$I ESL_CharType.inc}));
+            Break{For i};
+          end
+        else System.Move(fLineBreak[1],Addr(Result[Len])^,Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
       {$ELSE}
         System.Move({$I ESL_PCharType.inc}(fLineBreak)^,Addr(Result[Len])^,Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
       {$ENDIF}
@@ -194,8 +224,8 @@ end;
 
 procedure {$I ESL_ListType.inc}.SetText(Value: {$I ESL_StringType.inc});
 var
-  C,S:  {$I ESL_PCharType.inc};
-  Buff: {$I ESL_StringType.inc};
+  C,S,E:  {$I ESL_PCharType.inc};
+  Buff:   {$I ESL_StringType.inc};
 begin
 BeginUpdate;
 try
@@ -205,13 +235,20 @@ try
 {$ELSE}
   C := {$I ESL_PCharType.inc}(Value);
 {$ENDIF}
+  E := {$I ESL_PCharType.inc}(PtrUInt(C) + Length(Value) * SizeOf({$I ESL_CharType.inc}));
   If C <> nil then
-    while Ord(C^) <> 0 do
+    while PtrUInt(C) < PtrUInt(E) do
       begin
         S := C;
-        while not IsBreak(C^) do Inc(C);
+        while (PtrUInt(C) < PtrUInt(E)) do
+          If IsBreak(C^) then Break{while (PtrUInt(C) < PtrUInt(E))}
+            else Inc(C);
         If ({%H-}PtrUInt(C) - {%H-}PtrUInt(S)) > 0 then
           begin
+          {
+             for shortstrings, input itself cannot be longer than 255, so no
+             need to check for limit when setting length of buffer
+          }
             SetLength(Buff,({%H-}PtrUInt(C) - {%H-}PtrUInt(S)) div SizeOf({$I ESL_CharType.inc}));
           {$IFDEF ESL_Short}
             System.Move(S^,Buff[1],Length(Buff) * SizeOf({$I ESL_CharType.inc}));
@@ -221,8 +258,10 @@ try
             Add(Buff);
           end
         else Add('');
-        If Ord(C^) = 13 then Inc(C);
-        If Ord(C^) = 10 then Inc(C);
+        If PtrUInt(C) < PtrUInt(E) then
+          If Ord(C^) = 13 then Inc(C);
+        If PtrUInt(C) < PtrUInt(E) then
+          If Ord(C^) = 10 then Inc(C);
       end;
 finally
   EndUpdate;
@@ -1065,7 +1104,7 @@ procedure {$I ESL_ListType.inc}.LoadFromStream(Stream: TStream; out Endianness: 
 const
   BufferSize = $10000;  // 64KiB buffer
 var
-{$DEFINE ESL_SHelper}
+{$DEFINE ESL_ShortHelper}
   Buffer:     Pointer;
   TempStr:    {$I ESL_StringType.inc};
   TempStrLen: Integer;
@@ -1086,7 +1125,7 @@ var
           Break{For ii};
         end;
   end;
-{$UNDEF ESL_SHelper}
+{$UNDEF ESL_ShortHelper}
 begin
 Endianness := seSystem;
 BeginUpdate;

@@ -21,7 +21,7 @@ type
   EExplicitStringListError = Exception;
 
   TStringEndianness = (seSystem,seLittle,seBig);
-  TLineBreakStyle = (lbsWIN,lbsUNIX,lbsMAC);
+  TLineBreakStyle = (lbsWIN,lbsUNIX,lbsMAC,lbsCR,lbsLF,lbsCRLF);
 
   TExplicitStringList = class(TPersistent)
   private

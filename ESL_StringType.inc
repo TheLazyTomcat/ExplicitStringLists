@@ -1,5 +1,5 @@
 {$IF Defined(ESL_Short)}
-  {$IFDEF ESL_SHelper}AnsiString{$ELSE}ShortString{$ENDIF}
+  {$IFDEF ESL_ShortHelper}AnsiString{$ELSE}ShortString{$ENDIF}
 {$ELSEIF Defined(ESL_Ansi)}
   AnsiString
 {$ELSEIF Defined(ESL_UTF8)}
