@@ -1,5 +1,5 @@
-{$IF Defined(WINDOWS) or Defined(MSWINDOWS)}
-  {$DEFINE Windows}
+{$IF not(Defined(WINDOWS) or Defined(MSWINDOWS))}
+  {$MESSAGE FATAL 'Unsupported operating system.'}
 {$IFEND}
 
 {$IFDEF FPC}
@@ -25,4 +25,11 @@
 {$UNDEF ESL_Default}
 
 {$UNDEF ESL_ShortHelper}
-{$UNDEF ESL_ShortDefault}
+
+{$IFOPT H+}
+  // long strings (Ansi/Unicode)
+  {$UNDEF ESL_ShortDefault}
+{$ELSE}
+  // short strings
+  {$DEFINE ESL_ShortDefault}
+{$ENDIF}

@@ -13,11 +13,11 @@
     procedure SetCapacity(Value: Integer);
     procedure SetSorted(Value: Boolean);
     Function GetText: {$I ESL_StringType.inc};
-    procedure SetText(Value: {$I ESL_StringType.inc});
+    procedure SetText(const Value: {$I ESL_StringType.inc});
     Function GetDelimitedText: {$I ESL_StringType.inc};
-    procedure SetDelimitedText(Value: {$I ESL_StringType.inc});
+    procedure SetDelimitedText(const Value: {$I ESL_StringType.inc});
     Function GetCommaText: {$I ESL_StringType.inc};
-    procedure SetCommaText(Value: {$I ESL_StringType.inc});
+    procedure SetCommaText(const Value: {$I ESL_StringType.inc});
 
     procedure Grow(Delta: Integer = 1); virtual;
     Function CheckIndex(Index: Integer): Boolean; virtual;
@@ -172,7 +172,7 @@ end;
 Function {$I ESL_ListType.inc}.GetText: {$I ESL_StringType.inc};
 var
   i:    Integer;
-  Len:  Integer;
+  Len:  TStrSize;
 begin
 Len := 0;
 // count size for preallocation
@@ -182,17 +182,17 @@ Inc(Len,fCount * Length(fLineBreak));
 If not TrailingLineBreak and (fCount > 0) then
   Dec(Len,Length(fLineBreak));
 // preallocate
-{$IFDEF ESL_Short}
+{$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
 If Len > High(ShortString) then
   SetLength(Result,High(ShortString))
 else
-{$ENDIF}
+{$IFEND}
   SetLength(Result,Len);
 // store data
 Len := 1;
 For i := LowIndex to HighIndex do
   begin
-  {$IFDEF ESL_Short}
+  {$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
     If (Len + Length(fStrings[i]) - 1) > Length(Result) then
       begin
         System.Move(fStrings[i][1],Addr(Result[Len])^,(Length(Result) - Len + 1) * SizeOf({$I ESL_CharType.inc}));
@@ -201,11 +201,11 @@ For i := LowIndex to HighIndex do
     else System.Move(fStrings[i][1],Addr(Result[Len])^,Length(fStrings[i]) * SizeOf({$I ESL_CharType.inc}));
   {$ELSE}
     System.Move({$I ESL_PCharType.inc}(fStrings[i])^,Addr(Result[Len])^,Length(fStrings[i]) * SizeOf({$I ESL_CharType.inc}));
-  {$ENDIF}
+  {$IFEND}
     Inc(Len,Length(fStrings[i]));
     If (i < HighIndex) or TrailingLineBreak and (Length(fLineBreak) > 0) then
       begin
-      {$IFDEF ESL_Short}
+      {$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
         If (Len + Length(fLineBreak) - 1) > Length(Result) then
           begin
             System.Move(fLineBreak[1],Addr(Result[Len])^,(Length(Result) - Len + 1) * SizeOf({$I ESL_CharType.inc}));
@@ -214,7 +214,7 @@ For i := LowIndex to HighIndex do
         else System.Move(fLineBreak[1],Addr(Result[Len])^,Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
       {$ELSE}
         System.Move({$I ESL_PCharType.inc}(fLineBreak)^,Addr(Result[Len])^,Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
-      {$ENDIF}
+      {$IFEND}
         Inc(Len,Length(fLineBreak));
       end;
   end;
@@ -222,7 +222,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetText(Value: {$I ESL_StringType.inc});
+procedure {$I ESL_ListType.inc}.SetText(const Value: {$I ESL_StringType.inc});
 var
   C,S,E:  {$I ESL_PCharType.inc};
   Buff:   {$I ESL_StringType.inc};
@@ -230,17 +230,17 @@ begin
 BeginUpdate;
 try
   Clear;
-{$IFDEF ESL_Short}
+{$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
   C := Addr(Value[1]);
 {$ELSE}
   C := {$I ESL_PCharType.inc}(Value);
-{$ENDIF}
-  E := {$I ESL_PCharType.inc}(PtrUInt(C) + Length(Value) * SizeOf({$I ESL_CharType.inc}));
+{$IFEND}
+  E := {%H-}{$I ESL_PCharType.inc}({%H-}PtrUInt(C) + PtrUInt(Length(Value) * SizeOf({$I ESL_CharType.inc})));
   If C <> nil then
-    while PtrUInt(C) < PtrUInt(E) do
+    while {%H-}PtrUInt(C) < {%H-}PtrUInt(E) do
       begin
         S := C;
-        while (PtrUInt(C) < PtrUInt(E)) do
+        while ({%H-}PtrUInt(C) < {%H-}PtrUInt(E)) do
           If IsBreak(C^) then Break{while (PtrUInt(C) < PtrUInt(E))}
             else Inc(C);
         If ({%H-}PtrUInt(C) - {%H-}PtrUInt(S)) > 0 then
@@ -250,17 +250,17 @@ try
              need to check for limit when setting length of buffer
           }
             SetLength(Buff,({%H-}PtrUInt(C) - {%H-}PtrUInt(S)) div SizeOf({$I ESL_CharType.inc}));
-          {$IFDEF ESL_Short}
+          {$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
             System.Move(S^,Buff[1],Length(Buff) * SizeOf({$I ESL_CharType.inc}));
           {$ELSE}
             System.Move(S^,{$I ESL_PCharType.inc}(Buff)^,Length(Buff) * SizeOf({$I ESL_CharType.inc}));
-          {$ENDIF}
+          {$IFEND}
             Add(Buff);
           end
         else Add('');
-        If PtrUInt(C) < PtrUInt(E) then
+        If {%H-}PtrUInt(C) < {%H-}PtrUInt(E) then
           If Ord(C^) = 13 then Inc(C);
-        If PtrUInt(C) < PtrUInt(E) then
+        If {%H-}PtrUInt(C) < {%H-}PtrUInt(E) then
           If Ord(C^) = 10 then Inc(C);
       end;
 finally
@@ -271,17 +271,129 @@ end;
 //------------------------------------------------------------------------------
 
 Function {$I ESL_ListType.inc}.GetDelimitedText: {$I ESL_StringType.inc};
+var
+  i:    Integer;
+  Len:  TStrSize;
+  Temp: {$I ESL_StringType.inc};
+
+  Function GetRectifiedStringLength(Index: Integer): TStrSize;
+  var
+    ii:     TStrSize;
+    Quoted: Boolean;
+  begin
+    Quoted := False;
+    Result := Length(fStrings[Index]);
+    For ii := 1 to Length(fStrings[Index]) do
+      If (fStrings[Index][ii] = fQuoteChar) or
+        (fStrings[Index][ii] = fDelimiter) or
+        (Ord(fStrings[Index][ii]) in [0..32]) then
+        begin
+          If not Quoted then
+            Inc(Result,2);
+          If fStrings[Index][ii] = fQuoteChar then
+            Inc(Result);
+          Quoted := True;
+        end;
+  end;
+
+  Function GetRectifiedString(Index: Integer): {$I ESL_StringType.inc};
+  var
+    ii:     TStrSize;
+    ResPos: TStrSize;    
+    Quoted: Boolean;
+  begin
+    SetLength(Result,GetRectifiedStringLength(Index));
+    ResPos := 1;
+    Quoted := False;    
+    For ii := 1 to Length(fStrings[Index]) do
+      If ResPos <= Length(Result) then
+        begin
+          If fStrings[Index][ii] = fQuoteChar then
+            begin
+              If ResPos < Length(Result) then
+                begin
+                  Result[ResPos] := fStrings[Index][ii];
+                  Inc(ResPos);
+                  Result[ResPos] := fStrings[Index][ii];
+                  Quoted := True;
+                end
+              else Dec(ResPos);
+            end
+          else If (fStrings[Index][ii] = fDelimiter) or
+            (Ord(fStrings[Index][ii]) in [0..32]) then
+            begin
+              Result[ResPos] := fStrings[Index][ii];
+              Quoted := True;
+            end
+          else Result[ResPos] := fStrings[Index][ii];
+          Inc(ResPos);
+        end
+      else Break{For ii};
+    SetLength(Result,ResPos - 1);
+    If Quoted then
+      Result := fQuoteChar + Result + fQuoteChar;
+  end;
+
 begin
-{$message 'implement'}
-Result := '';
+Len := 0;
+// count size for preallocation
+For i := LowIndex to HighIndex do
+  Inc(Len,GetRectifiedStringLength(i) + 1{delimiter});
+If fCount > 0 then
+  Dec(Len){last delimiter};
+// preallocate
+{$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
+If Len > High(ShortString) then
+  SetLength(Result,High(ShortString))
+else
+{$IFEND}
+  SetLength(Result,Len);
+// store data
+Len := 1;
+For i := LowIndex to HighIndex do
+  begin
+    Temp := GetRectifiedString(i);
+  {$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
+    If (Len + Length(Temp) - 1) > Length(Result) then
+      begin
+        System.Move(Temp[1],Addr(Result[Len])^,(Length(Result) - Len + 1) * SizeOf({$I ESL_CharType.inc}));
+        Break{For i};
+      end
+    else System.Move(Temp[1],Addr(Result[Len])^,Length(Temp) * SizeOf({$I ESL_CharType.inc}));
+  {$ELSE}
+    System.Move({$I ESL_PCharType.inc}(Temp)^,Addr(Result[Len])^,Length(Temp) * SizeOf({$I ESL_CharType.inc}));
+  {$IFEND}
+    Inc(Len,Length(Temp));
+    If i < HighIndex then
+      begin
+        If Len <= Length(Result) then
+          Result[Len] := fDelimiter
+        else
+          Break{For i};
+        Inc(Len);
+      end;
+  end;
+If Len <= Length(Result) then
+  SetLength(Result,Len - 1);
 end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetDelimitedText(Value: {$I ESL_StringType.inc});
+procedure {$I ESL_ListType.inc}.SetDelimitedText(const Value: {$I ESL_StringType.inc});
 begin
-{$message 'implement'}
-Value := '';
+BeginUpdate;
+try
+  Clear;
+  with {$I ESL_DTParserType.inc}.Create(fDelimiter,fQuoteChar,fStrictDelimiter) do
+  try
+    OnNewString := {$IFDEF FPC}@{$ENDIF}Self.Append;
+    Parse(Value);
+  finally
+    Free;
+  end;
+finally
+  EndUpdate;
+end;
 end;
 
 //------------------------------------------------------------------------------
@@ -305,7 +417,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetCommaText(Value: {$I ESL_StringType.inc});
+procedure {$I ESL_ListType.inc}.SetCommaText(const Value: {$I ESL_StringType.inc});
 var
   OldDelimiter: {$I ESL_CharType.inc};
   OldQuoteChar: {$I ESL_CharType.inc};
@@ -403,7 +515,7 @@ If fCaseSensitive then
       Result := SysUtils.WideCompareStr(Str1,Str2)
     {$IFEND}
   {$ELSEIF Defined(ESL_Default)}
-      Result := AnsiCompareStr(Str1,Str2)
+      Result := SysUtils.AnsiCompareStr(Str1,Str2)
   {$IFEND}
 {$ENDIF}
 else
@@ -445,7 +557,7 @@ else
       Result := SysUtils.WideCompareText(Str1,Str2)
     {$IFEND}
   {$ELSEIF Defined(ESL_Default)}
-      Result := AnsiCompareText(Str1,Str2)
+      Result := SysUtils.AnsiCompareText(Str1,Str2)
   {$IFEND}
 {$ENDIF}
 end;
@@ -503,7 +615,7 @@ If CheckIndex(Index) then
   begin
     If Length(fStrings[Index]) > 0 then
       begin
-      {$IF Defined(ESL_Short)}
+      {$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
         Stream.WriteBuffer(fStrings[Index][1],Length(fStrings[Index]) * SizeOf({$I ESL_CharType.inc}));
       {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
         If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
@@ -531,7 +643,7 @@ var
 begin
 If Length(fLineBreak) > 0 then
   begin
-  {$IF Defined(ESL_Short)}
+  {$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
     Stream.WriteBuffer(fLineBreak[1],Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
   {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
     If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
@@ -1107,11 +1219,14 @@ var
 {$DEFINE ESL_ShortHelper}
   Buffer:     Pointer;
   TempStr:    {$I ESL_StringType.inc};
-  TempStrLen: Integer;
+  TempStrLen: TStrSize;
   BytesRead:  Integer;
-  CharsRead:  Integer;
-  i:          Integer;
+  CharsRead:  TStrSize;
+  Position:   TStrSize;
   NewLine:    Boolean;
+{$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
+  i:          Integer;
+{$IFEND}
 
   Function BreakPos(const Str: {$I ESL_StringType.inc}; Start: Integer = 1): Integer;
   var
@@ -1171,16 +1286,16 @@ try
             System.Move(Buffer^,TempStr[TempStrLen + 1],(Length(TempStr) - TempStrLen) * SizeOf({$I ESL_CharType.inc}));
             TempStrLen := 0;
             repeat
-              i := BreakPos(TempStr,TempStrLen + 1) - 1;
-              If i >= 0 then
+              Position := BreakPos(TempStr,TempStrLen + 1) - 1;
+              If Position >= 0 then
                 begin
                   If NewLine then
                     begin
                       NewLine := False;
-                      Add(Copy(TempStr,TempStrLen + 1,i - TempStrLen));
-                      TempStrLen := i;
+                      Add(Copy(TempStr,TempStrLen + 1,Position - TempStrLen));
+                      TempStrLen := Position;
                     end;
-                  If (Length(TempStr) - i) >= 2 then
+                  If (Length(TempStr) - Position) >= 2 then
                     begin
                       If Ord(TempStr[TempStrLen + 1]) = 13 then
                         begin
@@ -1193,9 +1308,9 @@ try
                           NewLine := True;
                         end;
                     end
-                  else i := -1;
+                  else Position := -1;
                 end;
-            until i < 0;
+            until Position < 0;
             System.Delete(TempStr,1,TempStrLen);
             TempStrLen := Length(TempStr);
           end;

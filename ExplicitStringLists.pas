@@ -2,13 +2,13 @@
   todo:
   
     - add custom sort capability
-    - implement delimited text property
+  * - implement delimited text property
     - some methods can be class methods
     - re-arrange some methods
-    - for short, allow ansistring as large in/out
-    - revisit implementation of Get/SetText for short strings
+  * - for short, allow ansistring as large in/out
+  * - revisit implementation of Get/SetText for short strings
   * - add property LineBreakStype (write only, duh!)
-    - check implementation when default string is shortstring
+  * - check implementation when default string is shortstring
 }
 unit ExplicitStringLists;
 

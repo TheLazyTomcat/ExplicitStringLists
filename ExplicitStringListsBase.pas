@@ -46,7 +46,7 @@ type
     procedure DoChange; virtual;
     procedure DoChanging; virtual;
     Function GetSystemEndianness: TStringEndianness; virtual;
-    procedure WideSwapEndian(Data: PWideChar; Count: Integer); virtual;
+    procedure WideSwapEndian(Data: PWideChar; Count: TStrSize); virtual;
   public
     constructor Create;
     Function BeginUpdate: Integer; virtual;
@@ -143,15 +143,16 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TExplicitStringList.WideSwapEndian(Data: PWideChar; Count: Integer);
+procedure TExplicitStringList.WideSwapEndian(Data: PWideChar; Count: TStrSize);
 var
   i:  Integer;
 begin
-For i := 0 to Pred(Count) do
-  begin
-    PUInt16(Data)^ := UInt16(PUInt16(Data)^ shr 8) or UInt16(PUInt16(Data)^ shl 8);
-    Inc(Data);
-  end;
+If Count > 0 then
+  For i := 0 to Pred(Count) do
+    begin
+      PUInt16(Data)^ := UInt16(PUInt16(Data)^ shr 8) or UInt16(PUInt16(Data)^ shl 8);
+      Inc(Data);
+    end;
 end;
 
 //==============================================================================

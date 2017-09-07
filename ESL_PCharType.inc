@@ -1,13 +1,13 @@
 {$IF Defined(ESL_Short)}
-  PAnsiChar
+{%H-}PAnsiChar
 {$ELSEIF Defined(ESL_Ansi)}
-  PAnsiChar
+{%H-}PAnsiChar
 {$ELSEIF Defined(ESL_UTF8)}
-  PUTF8Char
+{%H-}PUTF8Char
 {$ELSEIF Defined(ESL_Wide)}
-  PWideChar
+{%H-}PWideChar
 {$ELSEIF Defined(ESL_Unicode)}
-  PWideChar
+{%H-}PWideChar
 {$ELSEIF Defined(ESL_Default)}
-  PChar
+{%H-}PChar
 {$IFEND}

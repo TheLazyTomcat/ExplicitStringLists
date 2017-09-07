@@ -10,34 +10,35 @@ uses
 {$DEFINE ESL_Declaration}
 
 type
-  TShortStringList = class(TExplicitStringList)
+
+{$DEFINE ESL_Short}
+  {$I ESL_ListType.inc} = class(TExplicitStringList)
   protected
     Function GetAnsiText: AnsiString;
-    procedure SetAnsiText(Value: AnsiString);
+    procedure SetAnsiText(const Value: AnsiString);
     Function GetAnsiDelimitedText: AnsiString;
-    procedure SetAnsiDelimitedText(Value: AnsiString);
+    procedure SetAnsiDelimitedText(const Value: AnsiString);
     Function GetAnsiCommaText: AnsiString;
-    procedure SetAnsiCommaText(Value: AnsiString);
-  {$DEFINE ESL_Short}
+    procedure SetAnsiCommaText(const Value: AnsiString);
     {$I ExplicitStringLists.inc}
-  {$UNDEF ESL_Short}
   published
     property AnsiText: AnsiString read GetAnsiText write SetAnsiText;
     property AnsiDelimitedText: AnsiString read GetAnsiDelimitedText write SetAnsiDelimitedText;
     property AnsiCommaText: AnsiString read GetAnsiCommaText write SetAnsiCommaText;
   end;
+{$UNDEF ESL_Short}
 
-  TAnsiStringList = class(TExplicitStringList)
-  {$DEFINE ESL_Ansi}
+{$DEFINE ESL_Ansi}
+  {$I ESL_ListType.inc} = class(TExplicitStringList)
     {$I ExplicitStringLists.inc}
-  {$UNDEF ESL_Ansi}
   end;
+{$UNDEF ESL_Ansi}
 
-  TUTF8StringList = class(TExplicitStringList)
-  {$DEFINE ESL_UTF8}
+{$DEFINE ESL_UTF8}
+  {$I ESL_ListType.inc} = class(TExplicitStringList)
     {$I ExplicitStringLists.inc}
-  {$UNDEF ESL_UTF8}
   end;
+{$UNDEF ESL_UTF8}
 
 {$UNDEF ESL_Declaration}
 
@@ -47,7 +48,22 @@ uses
 {$IF not Defined(FPC) and (CompilerVersion >= 20)}
   (* Delphi2009+ *) Windows, AnsiStrings,
 {$IFEND}
-  SysUtils, StrRect, BinaryStreaming;
+  SysUtils, StrRect, BinaryStreaming, ExplicitStringListsParser;
+
+type
+  TAnsiParsingHelper = class(TObject)
+  private
+    fOnAddItem: TShortDelimitedTextParserEvent;
+  public
+    procedure Thunk(const Str: AnsiString); virtual;
+    property OnAddItem: TShortDelimitedTextParserEvent read fOnAddItem write fOnAddItem;
+  end;
+
+procedure TAnsiParsingHelper.Thunk(const Str: AnsiString);
+begin
+If Assigned(fOnAddItem) then
+  fOnAddItem(ShortString(Str));
+end;
 
 {$DEFINE ESL_Implementation}
 
@@ -58,7 +74,7 @@ uses
 Function TShortStringList.GetAnsiText: AnsiString;
 var
   i:    Integer;
-  Len:  Integer;
+  Len:  TStrSize;
 begin
 Len := 0;
 // count size for preallocation
@@ -85,7 +101,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TShortStringList.SetAnsiText(Value: AnsiString);
+procedure TShortStringList.SetAnsiText(const Value: AnsiString);
 var
   C,S:  PAnsiChar;
   Buff: AnsiString;
@@ -117,15 +133,128 @@ end;
 //------------------------------------------------------------------------------
 
 Function TShortStringList.GetAnsiDelimitedText: AnsiString;
+var
+  i:    Integer;
+  Len:  TStrSize;
+  Temp: ShortString;
+
+  Function GetRectifiedStringLength(Index: Integer): TStrSize;
+  var
+    ii:     TStrSize;
+    Quoted: Boolean;
+  begin
+    Quoted := False;
+    Result := Length(fStrings[Index]);
+    For ii := 1 to Length(fStrings[Index]) do
+      If (fStrings[Index][ii] = fQuoteChar) or
+        (fStrings[Index][ii] = fDelimiter) or
+        (Ord(fStrings[Index][ii]) in [0..32]) then
+        begin
+          If not Quoted then
+            Inc(Result,2);
+          If fStrings[Index][ii] = fQuoteChar then
+            Inc(Result);
+          Quoted := True;
+        end;
+    If Result >= High(ShortString) then
+      Result := High(ShortString);
+  end;
+
+  Function GetRectifiedString(Index: Integer): ShortString;
+  var
+    ii:     TStrSize;
+    ResPos: TStrSize;    
+    Quoted: Boolean;
+  begin
+    SetLength(Result,High(ShortString));
+    ResPos := 1;
+    Quoted := False;    
+    For ii := 1 to Length(fStrings[Index]) do
+      If ResPos <= Length(Result) then
+        begin
+          If fStrings[Index][ii] = fQuoteChar then
+            begin
+              If ResPos < Length(Result) then
+                begin
+                  Result[ResPos] := fStrings[Index][ii];
+                  Inc(ResPos);
+                  Result[ResPos] := fStrings[Index][ii];
+                  Quoted := True;
+                end
+              else Dec(ResPos);
+            end
+          else If (fStrings[Index][ii] = fDelimiter) or
+            (Ord(fStrings[Index][ii]) in [0..32]) then
+            begin
+              Result[ResPos] := fStrings[Index][ii];
+              Quoted := True;
+            end
+          else Result[ResPos] := fStrings[Index][ii];
+          Inc(ResPos);
+        end
+      else Break{For ii};
+    SetLength(Result,ResPos - 1);
+    If Quoted then
+      begin
+        Result := fQuoteChar + Result;
+        If Length(Result) < High(ShortString) then
+          Result := Result + fQuoteChar
+        else
+          Result[Length(Result)] := fQuoteChar;
+      end;
+  end;
+
 begin
-{$message 'implement'}
+Len := 0;
+// count size for preallocation
+For i := LowIndex to HighIndex do
+  Inc(Len,GetRectifiedStringLength(i) + 1{delimiter});
+If fCount > 0 then
+  Dec(Len){last delimiter};
+// preallocate
+SetLength(Result,Len);
+// store data
+Len := 1;
+For i := LowIndex to HighIndex do
+  begin
+    Temp := GetRectifiedString(i);
+    System.Move(Temp[1],Addr(Result[Len])^,Length(Temp) * SizeOf(AnsiChar));
+    Inc(Len,Length(Temp));
+    If i < HighIndex then
+      begin
+        Result[Len] := fDelimiter;
+        Inc(Len);
+      end;
+  end;
+If Len <= Length(Result) then
+  SetLength(Result,Len - 1);
 end;
 
 //------------------------------------------------------------------------------
 
-procedure TShortStringList.SetAnsiDelimitedText(Value: AnsiString);
+procedure TShortStringList.SetAnsiDelimitedText(const Value: AnsiString);
+var
+  Helper: TAnsiParsingHelper;
 begin
-{$message 'implement'}
+BeginUpdate;
+try
+  Clear;
+  Helper := TAnsiParsingHelper.Create;
+  try
+    Helper.OnAddItem := {$IFDEF FPC}@{$ENDIF}Self.Append;
+    with TAnsiDelimitedTextParser.Create(fDelimiter,fQuoteChar,fStrictDelimiter) do
+    try
+      OnNewString := {$IFDEF FPC}@{$ENDIF}Helper.Thunk;
+      Parse(Value);
+    finally
+      Free;
+    end;
+  finally
+    Helper.Free;
+  end;
+finally
+  EndUpdate;
+end;
 end;
 
 //------------------------------------------------------------------------------
@@ -149,7 +278,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TShortStringList.SetAnsiCommaText(Value: AnsiString);
+procedure TShortStringList.SetAnsiCommaText(const Value: AnsiString);
 var
   OldDelimiter: AnsiChar;
   OldQuoteChar: AnsiChar;

@@ -10,23 +10,24 @@ uses
 {$DEFINE ESL_Declaration}
 
 type
-  TWideStringList = class(TExplicitStringList)
-  {$DEFINE ESL_Wide}
-    {$I ExplicitStringLists.inc}
-  {$UNDEF ESL_Wide}
-  end;
 
-  TUnicodeStringList = class(TExplicitStringList)
-  {$DEFINE ESL_Unicode}
+{$DEFINE ESL_Wide}
+  {$I ESL_ListType.inc} = class(TExplicitStringList)
     {$I ExplicitStringLists.inc}
-  {$UNDEF ESL_Unicode}
   end;
+{$UNDEF ESL_Wide}
 
-  TDefaultStringList = class(TExplicitStringList)
-  {$DEFINE ESL_Default}
+{$DEFINE ESL_Unicode}
+  {$I ESL_ListType.inc} = class(TExplicitStringList)
     {$I ExplicitStringLists.inc}
-  {$UNDEF ESL_Default}
   end;
+{$UNDEF ESL_Unicode}
+
+{$DEFINE ESL_Default}
+  {$I ESL_ListType.inc} = class(TExplicitStringList)
+    {$I ExplicitStringLists.inc}
+  end;
+{$UNDEF ESL_Default}
 
 {$UNDEF ESL_Declaration}
 
@@ -36,7 +37,7 @@ uses
 {$IF not Defined(FPC) and (CompilerVersion >= 20)}
   (* Delphi2009+ *) Windows, AnsiStrings,
 {$IFEND}
-  SysUtils, StrRect, BinaryStreaming;
+  SysUtils, StrRect, BinaryStreaming, ExplicitStringListsParser;
 
 {$DEFINE ESL_Implementation}
 
