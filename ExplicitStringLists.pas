@@ -1,7 +1,7 @@
 {
   todo:
-  
-    - add custom sort capability
+
+  * - add custom sort capability
   * - implement delimited text property
     - some methods can be class methods
     - re-arrange some methods
@@ -17,11 +17,9 @@ unit ExplicitStringLists;
 interface
 
 uses
-  ExplicitStringListsBase, ExplicitStringListsA, ExplicitStringListsW;
+  ExplicitStringListsA, ExplicitStringListsW;
 
 type
-  TExplicitStringList = ExplicitStringListsBase.TExplicitStringList;
-
   TShortStringList = ExplicitStringListsA.TShortStringList;
   TAnsiStringList = ExplicitStringListsA.TAnsiStringList;
   TUTF8StringList = ExplicitStringListsA.TUTF8StringList;

@@ -55,6 +55,7 @@
     Function Remove(const Str: {$I ESL_StringType.inc}): Integer; virtual;
     procedure Delete(Index: Integer); virtual;
     procedure Clear; virtual;
+    procedure CustomSort(CompareFunction: {$I ESL_CompFuncType.inc}; Reversed: Boolean = False); virtual;
     procedure Reverse; virtual;
     Function Equals(Strings: {$I ESL_ListType.inc}): Boolean; reintroduce; virtual;
     procedure SetStrings(Strings: {$I ESL_ListType.inc}); overload; virtual;
@@ -1086,6 +1087,46 @@ For i := LowIndex to HighIndex do
   fStrings[i] := '';
 fCount := 0;
 DoChange;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure {$I ESL_ListType.inc}.CustomSort(CompareFunction: {$I ESL_CompFuncType.inc}; Reversed: Boolean = False);
+
+  procedure QuickSort(LeftIdx,RightIdx,Coef: Integer);
+  var
+    Idx,i:  Integer;
+  begin
+    If LeftIdx < RightIdx then
+      begin
+        Exchange((LeftIdx + RightIdx) shr 1,RightIdx);
+        Idx := LeftIdx;
+        For i := LeftIdx to Pred(RightIdx) do
+          If (CompareFunction(fStrings[RightIdx],fStrings[i]) * Coef) > 0 then
+            begin
+              Exchange(i,idx);
+              Inc(Idx);
+            end;
+        Exchange(Idx,RightIdx);
+        QuickSort(LeftIdx,Idx - 1,Coef);
+        QuickSort(Idx + 1,RightIdx,Coef);
+      end;
+  end;
+  
+begin
+If fCount > 1 then
+  begin
+    BeginUpdate;
+    try
+      If Reversed then
+        QuickSort(LowIndex,HighIndex,-1)
+      else
+        QuickSort(LowIndex,HighIndex,1);
+      Sorted := False;
+    finally
+      EndUpdate;
+    end;
+  end;
 end;
 
 //------------------------------------------------------------------------------

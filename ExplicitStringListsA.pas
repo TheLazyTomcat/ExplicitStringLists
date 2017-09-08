@@ -12,6 +12,8 @@ uses
 type
 
 {$DEFINE ESL_Short}
+  {$I ESL_CompFuncType.inc} = Function(const Str1,Str2: {$I ESL_StringType.inc}): Integer;
+
   {$I ESL_ListType.inc} = class(TExplicitStringList)
   protected
     Function GetAnsiText: AnsiString;
@@ -29,12 +31,16 @@ type
 {$UNDEF ESL_Short}
 
 {$DEFINE ESL_Ansi}
+  {$I ESL_CompFuncType.inc} = Function(const Str1,Str2: {$I ESL_StringType.inc}): Integer;
+
   {$I ESL_ListType.inc} = class(TExplicitStringList)
     {$I ExplicitStringLists.inc}
   end;
 {$UNDEF ESL_Ansi}
 
 {$DEFINE ESL_UTF8}
+  {$I ESL_CompFuncType.inc} = Function(const Str1,Str2: {$I ESL_StringType.inc}): Integer;
+
   {$I ESL_ListType.inc} = class(TExplicitStringList)
     {$I ExplicitStringLists.inc}
   end;

@@ -12,18 +12,24 @@ uses
 type
 
 {$DEFINE ESL_Wide}
+  {$I ESL_CompFuncType.inc} = Function(const Str1,Str2: {$I ESL_StringType.inc}): Integer;
+
   {$I ESL_ListType.inc} = class(TExplicitStringList)
     {$I ExplicitStringLists.inc}
   end;
 {$UNDEF ESL_Wide}
 
 {$DEFINE ESL_Unicode}
+  {$I ESL_CompFuncType.inc} = Function(const Str1,Str2: {$I ESL_StringType.inc}): Integer;
+
   {$I ESL_ListType.inc} = class(TExplicitStringList)
     {$I ExplicitStringLists.inc}
   end;
 {$UNDEF ESL_Unicode}
 
 {$DEFINE ESL_Default}
+  {$I ESL_CompFuncType.inc} = Function(const Str1,Str2: {$I ESL_StringType.inc}): Integer;
+
   {$I ESL_ListType.inc} = class(TExplicitStringList)
     {$I ExplicitStringLists.inc}
   end;
