@@ -65,8 +65,10 @@
     procedure Reverse; virtual;
     Function Equals(Strings: {$I ESL_ListType.inc}): Boolean; reintroduce; virtual;
     procedure SetStrings(Strings: {$I ESL_ListType.inc}); overload; virtual;
+    procedure SetStrings(Strings: array of {$I ESL_StringType.inc}); overload; virtual;
     procedure SetStrings(Strings: TStrings); overload; virtual;
-    procedure SetStringsDef(Strings: TStrings); virtual;
+    procedure SetStringsDef(Strings: TStrings); overload; virtual;
+    procedure SetStringsDef(Strings: array of String); overload; virtual;
     procedure Assign(Source: TPersistent); override;
     procedure LoadFromStream(Stream: TStream; out {%H-}Endianness: TStringEndianness); override;
     property Items[Index: Integer]: {$I ESL_StringType.inc} read GetItem write SetItem; default;
@@ -1201,6 +1203,21 @@ end;
 
 //------------------------------------------------------------------------------
 
+procedure {$I ESL_ListType.inc}.SetStrings(Strings: array of {$I ESL_StringType.inc});
+var
+  i:  Integer;
+begin
+DoChanging;
+SetCapacity(Length(Strings));
+For i := Low(Strings) to high(Strings) do
+  fStrings[i] := Strings[i];
+fCount := Length(Strings);
+fSorted := False;
+DoChange;
+end;
+
+//------------------------------------------------------------------------------
+
 procedure {$I ESL_ListType.inc}.SetStrings(Strings: TStrings);
 begin
 SetStringsDef(Strings);
@@ -1217,6 +1234,21 @@ SetCapacity(Strings.Count);
 For i := LowIndex to HighIndex do
   fStrings[i] := ConvertStringTo(Strings[i]);
 fCount := Strings.Count;
+fSorted := False;
+DoChange;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure {$I ESL_ListType.inc}.SetStringsDef(Strings: array of String);
+var
+  i:  Integer;
+begin
+DoChanging;
+SetCapacity(Length(Strings));
+For i := LowIndex to HighIndex do
+  fStrings[i] := ConvertStringTo(Strings[i]);
+fCount := Length(Strings);
 fSorted := False;
 DoChange;
 end;
