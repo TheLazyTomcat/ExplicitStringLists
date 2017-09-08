@@ -37,16 +37,16 @@ type
     fDuplicates:        TDuplicates;
     fSorted:            Boolean;
     Function GetUpdating: Boolean;
+    class procedure Error(const Msg: string; Data: array of const); virtual;
+    class Function GetSystemEndianness: TStringEndianness; virtual;
+    class procedure WideSwapEndian(Data: PWideChar; Count: TStrSize); virtual;
+    procedure SetUpdateState({%H-}Updating: Boolean); virtual;
     Function CompareItems(Index1,Index2: Integer): Integer; virtual; abstract;
     procedure WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TStringEndianness); virtual; abstract;
     procedure WriteLineBreakToStream(Stream: TStream; Endianness: TStringEndianness); virtual; abstract;
     procedure WriteBOMToStream(Stream: TStream; Endianness: TStringEndianness); virtual; abstract;
-    procedure SetUpdateState({%H-}Updating: Boolean); virtual;
-    procedure Error(const Msg: string; Data: array of const); virtual;
     procedure DoChange; virtual;
     procedure DoChanging; virtual;
-    Function GetSystemEndianness: TStringEndianness; virtual;
-    procedure WideSwapEndian(Data: PWideChar; Count: TStrSize); virtual;
   public
     constructor Create;
     Function BeginUpdate: Integer; virtual;
@@ -101,16 +101,37 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TExplicitStringList.SetUpdateState(Updating: Boolean);
+class procedure TExplicitStringList.Error(const Msg: string; Data: array of const);
 begin
-// nothing to do here
+raise EExplicitStringListError.CreateFmt(ClassName + '.' + Msg,Data);
 end;
 
 //------------------------------------------------------------------------------
 
-procedure TExplicitStringList.Error(const Msg: string; Data: array of const);
+class Function TExplicitStringList.GetSystemEndianness: TStringEndianness;
 begin
-raise EExplicitStringListError.CreateFmt(ClassName + '.' + Msg,Data);
+Result := {$IFDEF ENDIAN_BIG}seBig{$ELSE}seLittle{$ENDIF};
+end;
+
+//------------------------------------------------------------------------------
+
+class procedure TExplicitStringList.WideSwapEndian(Data: PWideChar; Count: TStrSize);
+var
+  i:  Integer;
+begin
+If Count > 0 then
+  For i := 0 to Pred(Count) do
+    begin
+      PUInt16(Data)^ := UInt16(PUInt16(Data)^ shr 8) or UInt16(PUInt16(Data)^ shl 8);
+      Inc(Data);
+    end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.SetUpdateState(Updating: Boolean);
+begin
+// nothing to do here
 end;
 
 //------------------------------------------------------------------------------
@@ -132,27 +153,6 @@ If fUpdateCount <= 0 then
       fOnChange(Self);
   end
 else fChanged := True;
-end;
-
-//------------------------------------------------------------------------------
-
-Function TExplicitStringList.GetSystemEndianness: TStringEndianness;
-begin
-Result := {$IFDEF ENDIAN_BIG}seBig{$ELSE}seLittle{$ENDIF};
-end;
-
-//------------------------------------------------------------------------------
-
-procedure TExplicitStringList.WideSwapEndian(Data: PWideChar; Count: TStrSize);
-var
-  i:  Integer;
-begin
-If Count > 0 then
-  For i := 0 to Pred(Count) do
-    begin
-      PUInt16(Data)^ := UInt16(PUInt16(Data)^ shr 8) or UInt16(PUInt16(Data)^ shl 8);
-      Inc(Data);
-    end;
 end;
 
 //==============================================================================

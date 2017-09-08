@@ -4,6 +4,7 @@
     fDelimiter: {$I ESL_CharType.inc};
     fLineBreak: {$I ESL_StringType.inc};
     fQuoteChar: {$I ESL_CharType.inc};
+    // getters, setters
     Function GetItem(Index: Integer): {$I ESL_StringType.inc};
     procedure SetItem(Index: Integer; const Value: {$I ESL_StringType.inc});
     Function GetString(Index: Integer): String;
@@ -18,19 +19,20 @@
     procedure SetDelimitedText(const Value: {$I ESL_StringType.inc});
     Function GetCommaText: {$I ESL_StringType.inc};
     procedure SetCommaText(const Value: {$I ESL_StringType.inc});
-
+    // protected class methods 
+    class Function IsBreak(C: {$I ESL_CharType.inc}): Boolean; virtual;
+    class Function ConvertStringTo(const Str: String): {$I ESL_StringType.inc}; virtual;
+    class Function ConvertStringFrom(const Str: {$I ESL_StringType.inc}): String; virtual;
+    // normal protected methods
     procedure Grow(Delta: Integer = 1); virtual;
     Function CheckIndex(Index: Integer): Boolean; virtual;
-    Function CompareItems(Index1,Index2: Integer): Integer; override;
     Function CompareStrings(const Str1, Str2: {$I ESL_StringType.inc}): Integer; virtual;
+    Function CompareItems(Index1,Index2: Integer): Integer; override;
     Function IndexForSortedAddition(const Str: {$I ESL_StringType.inc}): Integer; virtual;
-    Function IsBreak(C: {$I ESL_CharType.inc}): Boolean; virtual;
     procedure WriteItemToStream(Stream: TStream; Index: Integer; {%H-}Endianness: TStringEndianness); override;
     procedure WriteLineBreakToStream(Stream: TStream; {%H-}Endianness: TStringEndianness); override;
     procedure WriteBOMToStream({%H-}Stream: TStream; {%H-}Endianness: TStringEndianness); override;
     procedure AssignTo(Dest: TPersistent); override;
-    Function ConvertStringTo(const Str: String): {$I ESL_StringType.inc}; virtual;
-    Function ConvertStringFrom(const Str: {$I ESL_StringType.inc}): String; virtual;
   public
     constructor Create;
     destructor Destroy; override;
@@ -437,6 +439,51 @@ end;
 
 //==============================================================================
 
+class Function {$I ESL_ListType.inc}.IsBreak(C: {$I ESL_CharType.inc}): Boolean;
+begin
+Result := Ord(C) in [0,10,13];
+end;
+
+//------------------------------------------------------------------------------
+
+class Function {$I ESL_ListType.inc}.ConvertStringTo(const Str: String): {$I ESL_StringType.inc};
+begin
+{$IF Defined(ESL_Short)}
+  Result := StrToShort(Str);
+{$ELSEIF Defined(ESL_Ansi)}
+  Result := StrToAnsi(Str);
+{$ELSEIF Defined(ESL_UTF8)}
+  Result := StrToUTF8(Str);
+{$ELSEIF Defined(ESL_Wide)}
+  Result := StrToWide(Str);
+{$ELSEIF Defined(ESL_Unicode)}
+  Result := StrToUnicode(Str);
+{$ELSEIF Defined(ESL_Default)}
+  Result := Str;
+{$IFEND}
+end;
+
+//------------------------------------------------------------------------------
+
+class Function {$I ESL_ListType.inc}.ConvertStringFrom(const Str: {$I ESL_StringType.inc}): String;
+begin
+{$IF Defined(ESL_Short)}
+  Result := ShortToStr(Str);
+{$ELSEIF Defined(ESL_Ansi)}
+  Result := AnsiToStr(Str);
+{$ELSEIF Defined(ESL_UTF8)}
+  Result := UTF8ToStr(Str);
+{$ELSEIF Defined(ESL_Wide)}
+  Result := WideToStr(Str);
+{$ELSEIF Defined(ESL_Unicode)}
+  Result := UnicodeToStr(Str);
+{$ELSEIF Defined(ESL_Default)}
+  Result := Str;
+{$IFEND}
+end;
+
+//==============================================================================
+
 procedure {$I ESL_ListType.inc}.Grow(Delta: Integer = 1);
 var
   NewLength:  Integer;
@@ -460,17 +507,6 @@ end;
 Function {$I ESL_ListType.inc}.CheckIndex(Index: Integer): Boolean;
 begin
 Result := (Index >= Low(fStrings)) and (Index < fCount); 
-end;
-
-//------------------------------------------------------------------------------
-
-Function {$I ESL_ListType.inc}.CompareItems(Index1,Index2: Integer): Integer;
-begin
-If not CheckIndex(Index1) then
-  Error('CompareItems: Index (%d) out of bounds.',[Index1]);
-If not CheckIndex(Index2) then
-  Error('CompareItems: Index (%d) out of bounds.',[Index2]);
-Result := CompareStrings(fStrings[Index1],fStrings[Index2]);
 end;
 
 //------------------------------------------------------------------------------
@@ -565,6 +601,17 @@ end;
 
 //------------------------------------------------------------------------------
 
+Function {$I ESL_ListType.inc}.CompareItems(Index1,Index2: Integer): Integer;
+begin
+If not CheckIndex(Index1) then
+  Error('CompareItems: Index (%d) out of bounds.',[Index1]);
+If not CheckIndex(Index2) then
+  Error('CompareItems: Index (%d) out of bounds.',[Index2]);
+Result := CompareStrings(fStrings[Index1],fStrings[Index2]);
+end;
+
+//------------------------------------------------------------------------------
+
 Function {$I ESL_ListType.inc}.IndexForSortedAddition(const Str: {$I ESL_StringType.inc}): Integer;
 var
   M,L,R,D:  Integer;
@@ -595,13 +642,6 @@ If fSorted then
     else Result := 0;
   end
 else Result := -1;
-end;
-
-//------------------------------------------------------------------------------
-
-Function {$I ESL_ListType.inc}.IsBreak(C: {$I ESL_CharType.inc}): Boolean;
-begin
-Result := Ord(C) in [0,10,13];
 end;
 
 //------------------------------------------------------------------------------
@@ -714,44 +754,6 @@ If Dest is TStrings then
   {$IFEND}
   end
 else inherited;
-end;
-
-//------------------------------------------------------------------------------
-
-Function {$I ESL_ListType.inc}.ConvertStringTo(const Str: String): {$I ESL_StringType.inc};
-begin
-{$IF Defined(ESL_Short)}
-  Result := StrToShort(Str);
-{$ELSEIF Defined(ESL_Ansi)}
-  Result := StrToAnsi(Str);
-{$ELSEIF Defined(ESL_UTF8)}
-  Result := StrToUTF8(Str);
-{$ELSEIF Defined(ESL_Wide)}
-  Result := StrToWide(Str);
-{$ELSEIF Defined(ESL_Unicode)}
-  Result := StrToUnicode(Str);
-{$ELSEIF Defined(ESL_Default)}
-  Result := Str;
-{$IFEND}
-end;
-
-//------------------------------------------------------------------------------
-
-Function {$I ESL_ListType.inc}.ConvertStringFrom(const Str: {$I ESL_StringType.inc}): String;
-begin
-{$IF Defined(ESL_Short)}
-  Result := ShortToStr(Str);
-{$ELSEIF Defined(ESL_Ansi)}
-  Result := AnsiToStr(Str);
-{$ELSEIF Defined(ESL_UTF8)}
-  Result := UTF8ToStr(Str);
-{$ELSEIF Defined(ESL_Wide)}
-  Result := WideToStr(Str);
-{$ELSEIF Defined(ESL_Unicode)}
-  Result := UnicodeToStr(Str);
-{$ELSEIF Defined(ESL_Default)}
-  Result := Str;
-{$IFEND}
 end;
 
 //==============================================================================
