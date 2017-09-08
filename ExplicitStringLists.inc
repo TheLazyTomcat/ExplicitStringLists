@@ -334,7 +334,7 @@ var
       else Break{For ii};
     SetLength(Result,ResPos - 1);
     If Quoted then
-      Result := fQuoteChar + Result + fQuoteChar;
+      Result := {$I ESL_StringType.inc}(fQuoteChar) + Result + {$I ESL_StringType.inc}(fQuoteChar);
   end;
 
 begin
