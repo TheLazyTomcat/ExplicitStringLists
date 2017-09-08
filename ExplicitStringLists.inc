@@ -1,3 +1,7 @@
+{===============================================================================
+    T*StringList - declaration
+===============================================================================}
+
 {$IFDEF ESL_Declaration}
   protected
     fStrings:   array of {$I ESL_StringType.inc};
@@ -79,7 +83,15 @@
     property CommaText: {$I ESL_StringType.inc} read GetCommaText write SetCommaText;
 {$ENDIF ESL_Declaration}
 
+{===============================================================================
+    T*StringList - implementation
+===============================================================================}
+
 {$IFDEF ESL_Implementation}
+
+{-------------------------------------------------------------------------------
+    T*StringList - protected methods
+-------------------------------------------------------------------------------}
 
 Function {$I ESL_ListType.inc}.GetItem(Index: Integer): {$I ESL_StringType.inc};
 begin
@@ -756,7 +768,10 @@ If Dest is TStrings then
 else inherited;
 end;
 
-//==============================================================================
+
+{-------------------------------------------------------------------------------
+    T*StringList - public methods
+-------------------------------------------------------------------------------}
 
 constructor {$I ESL_ListType.inc}.Create;
 begin

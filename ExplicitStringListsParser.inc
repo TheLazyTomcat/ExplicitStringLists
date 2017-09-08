@@ -1,3 +1,7 @@
+{===============================================================================
+    T*DelimitedTextParser - declaration
+===============================================================================}
+
 {$IFDEF ESL_Declaration}
   private
     fDelimiter:       {$I ESL_CharType.inc};
@@ -26,7 +30,15 @@
     property OnNewString: {$I ESL_DTParserEventType.inc} read fOnNewString write fOnNewString;
 {$ENDIF ESL_Declaration}
 
+{===============================================================================
+    T*DelimitedTextParser - implementation
+===============================================================================}
+
 {$IFDEF ESL_Implementation}
+
+{-------------------------------------------------------------------------------
+    T*DelimitedTextParser - protected methods
+-------------------------------------------------------------------------------}
 
 Function {$I ESL_DTParserType.inc}.RemoveDoubleQuotes(const Str: {$I ESL_StringType.inc}): {$I ESL_StringType.inc};
 var
@@ -175,7 +187,10 @@ If Assigned(fOnNewString) then
   fOnNewString(Str);
 end;
 
-//==============================================================================
+
+{-------------------------------------------------------------------------------
+    T*DelimitedTextParser - public methods
+-------------------------------------------------------------------------------}
 
 constructor {$I ESL_DTParserType.inc}.Create(Delimiter, QuoteChar: {$I ESL_CharType.inc}; StrictDelimiter: Boolean);
 begin

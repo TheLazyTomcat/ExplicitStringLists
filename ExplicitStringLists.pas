@@ -7,6 +7,9 @@ interface
 uses
   ExplicitStringListsA, ExplicitStringListsW;
 
+{===============================================================================
+    Forwarded classes
+===============================================================================}
 type
   TShortStringList = ExplicitStringListsA.TShortStringList;
   TAnsiStringList = ExplicitStringListsA.TAnsiStringList;
