@@ -4,30 +4,30 @@
 
 {$IFDEF ESL_Declaration}
   private
-    fDelimiter:       {$I ESL_CharType.inc};
-    fQuoteChar:       {$I ESL_CharType.inc};
+    fDelimiter:       {$I 'ESL_inc\ESL_CharType.inc'};
+    fQuoteChar:       {$I 'ESL_inc\ESL_CharType.inc'};
     fStrictDelimiter: Boolean;
-    fOnNewString:     {$I ESL_DTParserEventType.inc};
+    fOnNewString:     {$I 'ESL_inc\ESL_DTParserEventType.inc'};
     // parsing vars
     fParserState:     TDelimitedTextParserState;
-    fParsedString:    {$I ESL_StringType.inc};
+    fParsedString:    {$I 'ESL_inc\ESL_StringType.inc'};
     fPosition:        TStrSize;
     fItemStart:       TStrSize;
     fItemLength:      TStrSize;
   protected
-    Function RemoveDoubleQuotes(const Str: {$I ESL_StringType.inc}): {$I ESL_StringType.inc}; virtual;
-    Function LookAhead(IsChar: {$I ESL_CharType.inc}): Boolean; virtual;
+    Function RemoveDoubleQuotes(const Str: {$I 'ESL_inc\ESL_StringType.inc'}): {$I 'ESL_inc\ESL_StringType.inc'}; virtual;
+    Function LookAhead(IsChar: {$I 'ESL_inc\ESL_CharType.inc'}): Boolean; virtual;
     Function CurrCharType: TDelimitedTextParserCharType; virtual;
     procedure Parse_Initial; virtual;
     procedure Parse_WhiteSpace; virtual;
     procedure Parse_Delimiter; virtual;
     procedure Parse_NormalText; virtual;
     procedure Parse_QuotedText; virtual;
-    procedure DoNewString(const Str: {$I ESL_StringType.inc}); virtual;
+    procedure DoNewString(const Str: {$I 'ESL_inc\ESL_StringType.inc'}); virtual;
   public
-    constructor Create(Delimiter, QuoteChar: {$I ESL_CharType.inc}; StrictDelimiter: Boolean);
-    procedure Parse(const Str: {$I ESL_StringType.inc}); virtual;
-    property OnNewString: {$I ESL_DTParserEventType.inc} read fOnNewString write fOnNewString;
+    constructor Create(Delimiter, QuoteChar: {$I 'ESL_inc\ESL_CharType.inc'}; StrictDelimiter: Boolean);
+    procedure Parse(const Str: {$I 'ESL_inc\ESL_StringType.inc'}); virtual;
+    property OnNewString: {$I 'ESL_inc\ESL_DTParserEventType.inc'} read fOnNewString write fOnNewString;
 {$ENDIF ESL_Declaration}
 
 {===============================================================================
@@ -40,16 +40,16 @@
     T*DelimitedTextParser - protected methods
 -------------------------------------------------------------------------------}
 
-Function {$I ESL_DTParserType.inc}.RemoveDoubleQuotes(const Str: {$I ESL_StringType.inc}): {$I ESL_StringType.inc};
+Function {$I 'ESL_inc\ESL_DTParserType.inc'}.RemoveDoubleQuotes(const Str: {$I 'ESL_inc\ESL_StringType.inc'}): {$I 'ESL_inc\ESL_StringType.inc'};
 var
   i,ResPos: TStrSize;
-  LastChar: {$I ESL_CharType.inc};
+  LastChar: {$I 'ESL_inc\ESL_CharType.inc'};
 begin
 If Length(Str) > 0 then
   begin
     SetLength(Result,Length(Str));
     ResPos := 1;
-    LastChar := {$I ESL_CharType.inc}(not Ord(fQuoteChar));
+    LastChar := {$I 'ESL_inc\ESL_CharType.inc'}(not Ord(fQuoteChar));
     For i := 1 to Length(Str) do
       If not((Str[i] = fQuoteChar) and (LastChar = fQuoteChar)) then
         begin
@@ -57,7 +57,7 @@ If Length(Str) > 0 then
           Inc(ResPos);
           LastChar := Str[i];
         end
-      else LastChar := {$I ESL_CharType.inc}(not Ord(fQuoteChar));
+      else LastChar := {$I 'ESL_inc\ESL_CharType.inc'}(not Ord(fQuoteChar));
     SetLength(Result,ResPos - 1);
   end
 else Result := '';
@@ -65,7 +65,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_DTParserType.inc}.LookAhead(IsChar: {$I ESL_CharType.inc}): Boolean;
+Function {$I 'ESL_inc\ESL_DTParserType.inc'}.LookAhead(IsChar: {$I 'ESL_inc\ESL_CharType.inc'}): Boolean;
 begin
 If (fPosition >= 1) and (fPosition < Length(fParsedString)) then
   Result := fParsedString[fPosition + 1] = IsChar
@@ -75,7 +75,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_DTParserType.inc}.CurrCharType: TDelimitedTextParserCharType;
+Function {$I 'ESL_inc\ESL_DTParserType.inc'}.CurrCharType: TDelimitedTextParserCharType;
 begin
 If Ord(fParsedString[fPosition]) in [0..32] then
   Result := dtpcWhiteSpace
@@ -89,7 +89,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_DTParserType.inc}.Parse_Initial;
+procedure {$I 'ESL_inc\ESL_DTParserType.inc'}.Parse_Initial;
 begin
 fParserState := dtpsDelimiter;
 fPosition := 0;
@@ -99,7 +99,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_DTParserType.inc}.Parse_WhiteSpace;
+procedure {$I 'ESL_inc\ESL_DTParserType.inc'}.Parse_WhiteSpace;
 begin
 case CurrCharType of
   dtpcWhiteSpace:;// ignore
@@ -121,7 +121,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_DTParserType.inc}.Parse_Delimiter;
+procedure {$I 'ESL_inc\ESL_DTParserType.inc'}.Parse_Delimiter;
 begin
 case CurrCharType of
   dtpcWhiteSpace:;// ignore
@@ -141,7 +141,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_DTParserType.inc}.Parse_NormalText;
+procedure {$I 'ESL_inc\ESL_DTParserType.inc'}.Parse_NormalText;
 begin
 case CurrCharType of
   dtpcWhiteSpace: If not fStrictDelimiter then
@@ -161,7 +161,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_DTParserType.inc}.Parse_QuotedText;
+procedure {$I 'ESL_inc\ESL_DTParserType.inc'}.Parse_QuotedText;
 begin
 If CurrCharType = dtpcQuoteChar then
   begin
@@ -181,7 +181,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_DTParserType.inc}.DoNewString(const Str: {$I ESL_StringType.inc});
+procedure {$I 'ESL_inc\ESL_DTParserType.inc'}.DoNewString(const Str: {$I 'ESL_inc\ESL_StringType.inc'});
 begin
 If Assigned(fOnNewString) then
   fOnNewString(Str);
@@ -192,7 +192,7 @@ end;
     T*DelimitedTextParser - public methods
 -------------------------------------------------------------------------------}
 
-constructor {$I ESL_DTParserType.inc}.Create(Delimiter, QuoteChar: {$I ESL_CharType.inc}; StrictDelimiter: Boolean);
+constructor {$I 'ESL_inc\ESL_DTParserType.inc'}.Create(Delimiter, QuoteChar: {$I 'ESL_inc\ESL_CharType.inc'}; StrictDelimiter: Boolean);
 begin
 inherited Create;
 fDelimiter := Delimiter;
@@ -202,7 +202,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_DTParserType.inc}.Parse(const Str: {$I ESL_StringType.inc});
+procedure {$I 'ESL_inc\ESL_DTParserType.inc'}.Parse(const Str: {$I 'ESL_inc\ESL_StringType.inc'});
 begin
 fParserState := dtpsInitial;
 fParsedString := Str;

@@ -4,35 +4,35 @@
 
 {$IFDEF ESL_Declaration}
   protected
-    fStrings:   array of {$I ESL_StringType.inc};
-    fDelimiter: {$I ESL_CharType.inc};
-    fLineBreak: {$I ESL_StringType.inc};
-    fQuoteChar: {$I ESL_CharType.inc};
+    fStrings:   array of {$I 'ESL_inc\ESL_StringType.inc'};
+    fDelimiter: {$I 'ESL_inc\ESL_CharType.inc'};
+    fLineBreak: {$I 'ESL_inc\ESL_StringType.inc'};
+    fQuoteChar: {$I 'ESL_inc\ESL_CharType.inc'};
     // getters, setters
-    Function GetItem(Index: Integer): {$I ESL_StringType.inc};
-    procedure SetItem(Index: Integer; const Value: {$I ESL_StringType.inc});
+    Function GetItem(Index: Integer): {$I 'ESL_inc\ESL_StringType.inc'};
+    procedure SetItem(Index: Integer; const Value: {$I 'ESL_inc\ESL_StringType.inc'});
     Function GetString(Index: Integer): String;
     procedure SetString(Index: Integer; const Value: String);
     procedure SetLineBreakStyle(Value: TLineBreakStyle);
     Function GetCapacity: Integer;
     procedure SetCapacity(Value: Integer);
     procedure SetSorted(Value: Boolean);
-    Function GetText: {$I ESL_StringType.inc};
-    procedure SetText(const Value: {$I ESL_StringType.inc});
-    Function GetDelimitedText: {$I ESL_StringType.inc};
-    procedure SetDelimitedText(const Value: {$I ESL_StringType.inc});
-    Function GetCommaText: {$I ESL_StringType.inc};
-    procedure SetCommaText(const Value: {$I ESL_StringType.inc});
+    Function GetText: {$I 'ESL_inc\ESL_StringType.inc'};
+    procedure SetText(const Value: {$I 'ESL_inc\ESL_StringType.inc'});
+    Function GetDelimitedText: {$I 'ESL_inc\ESL_StringType.inc'};
+    procedure SetDelimitedText(const Value: {$I 'ESL_inc\ESL_StringType.inc'});
+    Function GetCommaText: {$I 'ESL_inc\ESL_StringType.inc'};
+    procedure SetCommaText(const Value: {$I 'ESL_inc\ESL_StringType.inc'});
     // protected class methods 
-    class Function IsBreak(C: {$I ESL_CharType.inc}): Boolean; virtual;
-    class Function ConvertStringTo(const Str: String): {$I ESL_StringType.inc}; virtual;
-    class Function ConvertStringFrom(const Str: {$I ESL_StringType.inc}): String; virtual;
+    class Function IsBreak(C: {$I 'ESL_inc\ESL_CharType.inc'}): Boolean; virtual;
+    class Function ConvertStringTo(const Str: String): {$I 'ESL_inc\ESL_StringType.inc'}; virtual;
+    class Function ConvertStringFrom(const Str: {$I 'ESL_inc\ESL_StringType.inc'}): String; virtual;
     // normal protected methods
     procedure Grow(Delta: Integer = 1); virtual;
     Function CheckIndex(Index: Integer): Boolean; virtual;
-    Function CompareStrings(const Str1, Str2: {$I ESL_StringType.inc}): Integer; virtual;
+    Function CompareStrings(const Str1, Str2: {$I 'ESL_inc\ESL_StringType.inc'}): Integer; virtual;
     Function CompareItems(Index1,Index2: Integer): Integer; override;
-    Function IndexForSortedAddition(const Str: {$I ESL_StringType.inc}): Integer; virtual;
+    Function IndexForSortedAddition(const Str: {$I 'ESL_inc\ESL_StringType.inc'}): Integer; virtual;
     procedure WriteItemToStream(Stream: TStream; Index: Integer; {%H-}Endianness: TStringEndianness); override;
     procedure WriteLineBreakToStream(Stream: TStream; {%H-}Endianness: TStringEndianness); override;
     procedure WriteBOMToStream({%H-}Stream: TStream; {%H-}Endianness: TStringEndianness); override;
@@ -42,47 +42,47 @@
     destructor Destroy; override;
     Function LowIndex: Integer; override;
     Function HighIndex: Integer; override;
-    Function First: {$I ESL_StringType.inc}; virtual;
-    Function Last: {$I ESL_StringType.inc}; virtual;
-    Function IndexOf(const Str: {$I ESL_StringType.inc}): Integer; virtual;
-    Function Find(const Str: {$I ESL_StringType.inc}; out Index: Integer): Boolean; virtual;
-    Function Add(const Str: {$I ESL_StringType.inc}): Integer; virtual;
+    Function First: {$I 'ESL_inc\ESL_StringType.inc'}; virtual;
+    Function Last: {$I 'ESL_inc\ESL_StringType.inc'}; virtual;
+    Function IndexOf(const Str: {$I 'ESL_inc\ESL_StringType.inc'}): Integer; virtual;
+    Function Find(const Str: {$I 'ESL_inc\ESL_StringType.inc'}; out Index: Integer): Boolean; virtual;
+    Function Add(const Str: {$I 'ESL_inc\ESL_StringType.inc'}): Integer; virtual;
     Function AddDef(const Str: String): Integer; virtual;
-    procedure AddStrings(Strings: {$I ESL_ListType.inc}); overload; virtual;
-    procedure AddStrings(Strings: array of {$I ESL_StringType.inc}); overload; virtual;
+    procedure AddStrings(Strings: {$I 'ESL_inc\ESL_ListType.inc'}); overload; virtual;
+    procedure AddStrings(Strings: array of {$I 'ESL_inc\ESL_StringType.inc'}); overload; virtual;
     procedure AddStrings(Strings: TStrings); overload; virtual;
     procedure AddStringsDef(Strings: TStrings); overload; virtual;
     procedure AddStringsDef(Strings: array of String); overload; virtual;
-    procedure Append(const Str: {$I ESL_StringType.inc}); virtual;
-    procedure Insert(Index: Integer; const Str: {$I ESL_StringType.inc}); virtual;
+    procedure Append(const Str: {$I 'ESL_inc\ESL_StringType.inc'}); virtual;
+    procedure Insert(Index: Integer; const Str: {$I 'ESL_inc\ESL_StringType.inc'}); virtual;
     procedure Move(SrcIdx, DstIdx: Integer); virtual;
     procedure Exchange(Idx1, Idx2: Integer); override;
-    Function Extract(const Str: {$I ESL_StringType.inc}): {$I ESL_StringType.inc}; virtual;
-    Function Remove(const Str: {$I ESL_StringType.inc}): Integer; virtual;
+    Function Extract(const Str: {$I 'ESL_inc\ESL_StringType.inc'}): {$I 'ESL_inc\ESL_StringType.inc'}; virtual;
+    Function Remove(const Str: {$I 'ESL_inc\ESL_StringType.inc'}): Integer; virtual;
     procedure Delete(Index: Integer); virtual;
     procedure Clear; virtual;
-    procedure CustomSort(CompareFunction: {$I ESL_CompFuncType.inc}; Reversed: Boolean = False); virtual;
+    procedure CustomSort(CompareFunction: {$I 'ESL_inc\ESL_CompFuncType.inc'}; Reversed: Boolean = False); virtual;
     procedure Reverse; virtual;
-    Function Equals(Strings: {$I ESL_ListType.inc}): Boolean; reintroduce; virtual;
-    procedure SetStrings(Strings: {$I ESL_ListType.inc}); overload; virtual;
-    procedure SetStrings(Strings: array of {$I ESL_StringType.inc}); overload; virtual;
+    Function Equals(Strings: {$I 'ESL_inc\ESL_ListType.inc'}): Boolean; reintroduce; virtual;
+    procedure SetStrings(Strings: {$I 'ESL_inc\ESL_ListType.inc'}); overload; virtual;
+    procedure SetStrings(Strings: array of {$I 'ESL_inc\ESL_StringType.inc'}); overload; virtual;
     procedure SetStrings(Strings: TStrings); overload; virtual;
     procedure SetStringsDef(Strings: TStrings); overload; virtual;
     procedure SetStringsDef(Strings: array of String); overload; virtual;
     procedure Assign(Source: TPersistent); override;
     procedure LoadFromStream(Stream: TStream; out {%H-}Endianness: TStringEndianness); override;
-    property Items[Index: Integer]: {$I ESL_StringType.inc} read GetItem write SetItem; default;
+    property Items[Index: Integer]: {$I 'ESL_inc\ESL_StringType.inc'} read GetItem write SetItem; default;
     property Strings[Index: Integer]: String read GetString write SetString;
   published
     property Capacity: Integer read GetCapacity write SetCapacity;
-    property Delimiter: {$I ESL_CharType.inc} read fDelimiter write fDelimiter;
-    property LineBreak: {$I ESL_StringType.inc} read fLineBreak write fLineBreak;
+    property Delimiter: {$I 'ESL_inc\ESL_CharType.inc'} read fDelimiter write fDelimiter;
+    property LineBreak: {$I 'ESL_inc\ESL_StringType.inc'} read fLineBreak write fLineBreak;
     property LineBreakStyle: TLineBreakStyle write SetLineBreakStyle;
-    property QuoteChar: {$I ESL_CharType.inc} read fQuoteChar write fQuoteChar;
+    property QuoteChar: {$I 'ESL_inc\ESL_CharType.inc'} read fQuoteChar write fQuoteChar;
     property Sorted: Boolean read fSorted write SetSorted;
-    property Text: {$I ESL_StringType.inc} read GetText write SetText;
-    property DelimitedText: {$I ESL_StringType.inc} read GetDelimitedText write SetDelimitedText;
-    property CommaText: {$I ESL_StringType.inc} read GetCommaText write SetCommaText;
+    property Text: {$I 'ESL_inc\ESL_StringType.inc'} read GetText write SetText;
+    property DelimitedText: {$I 'ESL_inc\ESL_StringType.inc'} read GetDelimitedText write SetDelimitedText;
+    property CommaText: {$I 'ESL_inc\ESL_StringType.inc'} read GetCommaText write SetCommaText;
 {$ENDIF ESL_Declaration}
 
 {===============================================================================
@@ -95,7 +95,7 @@
     T*StringList - protected methods
 -------------------------------------------------------------------------------}
 
-Function {$I ESL_ListType.inc}.GetItem(Index: Integer): {$I ESL_StringType.inc};
+Function {$I 'ESL_inc\ESL_ListType.inc'}.GetItem(Index: Integer): {$I 'ESL_inc\ESL_StringType.inc'};
 begin
 If CheckIndex(Index) then
   Result := fStrings[Index]
@@ -105,7 +105,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetItem(Index: Integer; const Value: {$I ESL_StringType.inc});
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.SetItem(Index: Integer; const Value: {$I 'ESL_inc\ESL_StringType.inc'});
 begin
 If CheckIndex(Index) then
   begin
@@ -118,7 +118,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.GetString(Index: Integer): String;
+Function {$I 'ESL_inc\ESL_ListType.inc'}.GetString(Index: Integer): String;
 begin
 If CheckIndex(Index) then
   Result := ConvertStringFrom(fStrings[Index])
@@ -128,7 +128,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetString(Index: Integer; const Value: String);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.SetString(Index: Integer; const Value: String);
 begin
 If CheckIndex(Index) then
   begin
@@ -141,12 +141,12 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetLineBreakStyle(Value: TLineBreakStyle);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.SetLineBreakStyle(Value: TLineBreakStyle);
 begin
 case Value of
-  lbsWIN,lbsCRLF: fLineBreak := {$I ESL_StringType.inc}(#13#10);
-  lbsUNIX,lbsLF:  fLineBreak := {$I ESL_StringType.inc}(#10);
-  lbsMAC,lbsCR:   fLineBreak := {$I ESL_StringType.inc}(#13);
+  lbsWIN,lbsCRLF: fLineBreak := {$I 'ESL_inc\ESL_StringType.inc'}(#13#10);
+  lbsUNIX,lbsLF:  fLineBreak := {$I 'ESL_inc\ESL_StringType.inc'}(#10);
+  lbsMAC,lbsCR:   fLineBreak := {$I 'ESL_inc\ESL_StringType.inc'}(#13);
 else
   Error('SetLineBreakStyle: Invalid style (%d).',[Ord(Value)])
 end;
@@ -154,14 +154,14 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.GetCapacity: Integer;
+Function {$I 'ESL_inc\ESL_ListType.inc'}.GetCapacity: Integer;
 begin
 Result := Length(fStrings);
 end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetCapacity(Value: Integer);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.SetCapacity(Value: Integer);
 begin
 If Value < Length(fStrings) then
   begin
@@ -175,7 +175,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetSorted(Value: Boolean);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.SetSorted(Value: Boolean);
 begin
 If fSorted <> Value then
   begin
@@ -186,7 +186,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.GetText: {$I ESL_StringType.inc};
+Function {$I 'ESL_inc\ESL_ListType.inc'}.GetText: {$I 'ESL_inc\ESL_StringType.inc'};
 var
   i:    Integer;
   Len:  TStrSize;
@@ -212,12 +212,12 @@ For i := LowIndex to HighIndex do
   {$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
     If (Len + Length(fStrings[i]) - 1) > Length(Result) then
       begin
-        System.Move(fStrings[i][1],Addr(Result[Len])^,(Length(Result) - Len + 1) * SizeOf({$I ESL_CharType.inc}));
+        System.Move(fStrings[i][1],Addr(Result[Len])^,(Length(Result) - Len + 1) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
         Break{For i};
       end
-    else System.Move(fStrings[i][1],Addr(Result[Len])^,Length(fStrings[i]) * SizeOf({$I ESL_CharType.inc}));
+    else System.Move(fStrings[i][1],Addr(Result[Len])^,Length(fStrings[i]) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
   {$ELSE}
-    System.Move({$I ESL_PCharType.inc}(fStrings[i])^,Addr(Result[Len])^,Length(fStrings[i]) * SizeOf({$I ESL_CharType.inc}));
+    System.Move({$I 'ESL_inc\ESL_PCharType.inc'}(fStrings[i])^,Addr(Result[Len])^,Length(fStrings[i]) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
   {$IFEND}
     Inc(Len,Length(fStrings[i]));
     If (i < HighIndex) or TrailingLineBreak and (Length(fLineBreak) > 0) then
@@ -225,12 +225,12 @@ For i := LowIndex to HighIndex do
       {$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
         If (Len + Length(fLineBreak) - 1) > Length(Result) then
           begin
-            System.Move(fLineBreak[1],Addr(Result[Len])^,(Length(Result) - Len + 1) * SizeOf({$I ESL_CharType.inc}));
+            System.Move(fLineBreak[1],Addr(Result[Len])^,(Length(Result) - Len + 1) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
             Break{For i};
           end
-        else System.Move(fLineBreak[1],Addr(Result[Len])^,Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
+        else System.Move(fLineBreak[1],Addr(Result[Len])^,Length(fLineBreak) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
       {$ELSE}
-        System.Move({$I ESL_PCharType.inc}(fLineBreak)^,Addr(Result[Len])^,Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
+        System.Move({$I 'ESL_inc\ESL_PCharType.inc'}(fLineBreak)^,Addr(Result[Len])^,Length(fLineBreak) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
       {$IFEND}
         Inc(Len,Length(fLineBreak));
       end;
@@ -239,10 +239,10 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetText(const Value: {$I ESL_StringType.inc});
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.SetText(const Value: {$I 'ESL_inc\ESL_StringType.inc'});
 var
-  C,S,E:  {$I ESL_PCharType.inc};
-  Buff:   {$I ESL_StringType.inc};
+  C,S,E:  {$I 'ESL_inc\ESL_PCharType.inc'};
+  Buff:   {$I 'ESL_inc\ESL_StringType.inc'};
 begin
 BeginUpdate;
 try
@@ -250,9 +250,9 @@ try
 {$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
   C := Addr(Value[1]);
 {$ELSE}
-  C := {$I ESL_PCharType.inc}(Value);
+  C := {$I 'ESL_inc\ESL_PCharType.inc'}(Value);
 {$IFEND}
-  E := {%H-}{$I ESL_PCharType.inc}({%H-}PtrUInt(C) + PtrUInt(Length(Value) * SizeOf({$I ESL_CharType.inc})));
+  E := {%H-}{$I 'ESL_inc\ESL_PCharType.inc'}({%H-}PtrUInt(C) + PtrUInt(Length(Value) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'})));
   If C <> nil then
     while {%H-}PtrUInt(C) < {%H-}PtrUInt(E) do
       begin
@@ -266,11 +266,11 @@ try
              for shortstrings, input itself cannot be longer than 255, so no
              need to check for limit when setting length of buffer
           }
-            SetLength(Buff,({%H-}PtrUInt(C) - {%H-}PtrUInt(S)) div SizeOf({$I ESL_CharType.inc}));
+            SetLength(Buff,({%H-}PtrUInt(C) - {%H-}PtrUInt(S)) div SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
           {$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
-            System.Move(S^,Buff[1],Length(Buff) * SizeOf({$I ESL_CharType.inc}));
+            System.Move(S^,Buff[1],Length(Buff) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
           {$ELSE}
-            System.Move(S^,{$I ESL_PCharType.inc}(Buff)^,Length(Buff) * SizeOf({$I ESL_CharType.inc}));
+            System.Move(S^,{$I 'ESL_inc\ESL_PCharType.inc'}(Buff)^,Length(Buff) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
           {$IFEND}
             Add(Buff);
           end
@@ -287,11 +287,11 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.GetDelimitedText: {$I ESL_StringType.inc};
+Function {$I 'ESL_inc\ESL_ListType.inc'}.GetDelimitedText: {$I 'ESL_inc\ESL_StringType.inc'};
 var
   i:    Integer;
   Len:  TStrSize;
-  Temp: {$I ESL_StringType.inc};
+  Temp: {$I 'ESL_inc\ESL_StringType.inc'};
 
   Function GetRectifiedStringLength(Index: Integer): TStrSize;
   var
@@ -313,7 +313,7 @@ var
         end;
   end;
 
-  Function GetRectifiedString(Index: Integer): {$I ESL_StringType.inc};
+  Function GetRectifiedString(Index: Integer): {$I 'ESL_inc\ESL_StringType.inc'};
   var
     ii:     TStrSize;
     ResPos: TStrSize;    
@@ -348,7 +348,7 @@ var
       else Break{For ii};
     SetLength(Result,ResPos - 1);
     If Quoted then
-      Result := {$I ESL_StringType.inc}(fQuoteChar) + Result + {$I ESL_StringType.inc}(fQuoteChar);
+      Result := {$I 'ESL_inc\ESL_StringType.inc'}(fQuoteChar) + Result + {$I 'ESL_inc\ESL_StringType.inc'}(fQuoteChar);
   end;
 
 begin
@@ -373,12 +373,12 @@ For i := LowIndex to HighIndex do
   {$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
     If (Len + Length(Temp) - 1) > Length(Result) then
       begin
-        System.Move(Temp[1],Addr(Result[Len])^,(Length(Result) - Len + 1) * SizeOf({$I ESL_CharType.inc}));
+        System.Move(Temp[1],Addr(Result[Len])^,(Length(Result) - Len + 1) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
         Break{For i};
       end
-    else System.Move(Temp[1],Addr(Result[Len])^,Length(Temp) * SizeOf({$I ESL_CharType.inc}));
+    else System.Move(Temp[1],Addr(Result[Len])^,Length(Temp) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
   {$ELSE}
-    System.Move({$I ESL_PCharType.inc}(Temp)^,Addr(Result[Len])^,Length(Temp) * SizeOf({$I ESL_CharType.inc}));
+    System.Move({$I 'ESL_inc\ESL_PCharType.inc'}(Temp)^,Addr(Result[Len])^,Length(Temp) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
   {$IFEND}
     Inc(Len,Length(Temp));
     If i < HighIndex then
@@ -396,12 +396,12 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetDelimitedText(const Value: {$I ESL_StringType.inc});
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.SetDelimitedText(const Value: {$I 'ESL_inc\ESL_StringType.inc'});
 begin
 BeginUpdate;
 try
   Clear;
-  with {$I ESL_DTParserType.inc}.Create(fDelimiter,fQuoteChar,fStrictDelimiter) do
+  with {$I 'ESL_inc\ESL_DTParserType.inc'}.Create(fDelimiter,fQuoteChar,fStrictDelimiter) do
   try
     OnNewString := {$IFDEF FPC}@{$ENDIF}Self.Append;
     Parse(Value);
@@ -415,10 +415,10 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.GetCommaText: {$I ESL_StringType.inc};
+Function {$I 'ESL_inc\ESL_ListType.inc'}.GetCommaText: {$I 'ESL_inc\ESL_StringType.inc'};
 var
-  OldDelimiter: {$I ESL_CharType.inc};
-  OldQuoteChar: {$I ESL_CharType.inc};
+  OldDelimiter: {$I 'ESL_inc\ESL_CharType.inc'};
+  OldQuoteChar: {$I 'ESL_inc\ESL_CharType.inc'};
 begin
 OldDelimiter := fDelimiter;
 OldQuoteChar := fQuoteChar;
@@ -434,10 +434,10 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetCommaText(const Value: {$I ESL_StringType.inc});
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.SetCommaText(const Value: {$I 'ESL_inc\ESL_StringType.inc'});
 var
-  OldDelimiter: {$I ESL_CharType.inc};
-  OldQuoteChar: {$I ESL_CharType.inc};
+  OldDelimiter: {$I 'ESL_inc\ESL_CharType.inc'};
+  OldQuoteChar: {$I 'ESL_inc\ESL_CharType.inc'};
 begin
 OldDelimiter := fDelimiter;
 OldQuoteChar := fQuoteChar;
@@ -453,14 +453,14 @@ end;
 
 //==============================================================================
 
-class Function {$I ESL_ListType.inc}.IsBreak(C: {$I ESL_CharType.inc}): Boolean;
+class Function {$I 'ESL_inc\ESL_ListType.inc'}.IsBreak(C: {$I 'ESL_inc\ESL_CharType.inc'}): Boolean;
 begin
 Result := Ord(C) in [0,10,13];
 end;
 
 //------------------------------------------------------------------------------
 
-class Function {$I ESL_ListType.inc}.ConvertStringTo(const Str: String): {$I ESL_StringType.inc};
+class Function {$I 'ESL_inc\ESL_ListType.inc'}.ConvertStringTo(const Str: String): {$I 'ESL_inc\ESL_StringType.inc'};
 begin
 {$IF Defined(ESL_Short)}
   Result := StrToShort(Str);
@@ -479,7 +479,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-class Function {$I ESL_ListType.inc}.ConvertStringFrom(const Str: {$I ESL_StringType.inc}): String;
+class Function {$I 'ESL_inc\ESL_ListType.inc'}.ConvertStringFrom(const Str: {$I 'ESL_inc\ESL_StringType.inc'}): String;
 begin
 {$IF Defined(ESL_Short)}
   Result := ShortToStr(Str);
@@ -498,7 +498,7 @@ end;
 
 //==============================================================================
 
-procedure {$I ESL_ListType.inc}.Grow(Delta: Integer = 1);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.Grow(Delta: Integer = 1);
 var
   NewLength:  Integer;
 begin
@@ -518,14 +518,14 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.CheckIndex(Index: Integer): Boolean;
+Function {$I 'ESL_inc\ESL_ListType.inc'}.CheckIndex(Index: Integer): Boolean;
 begin
 Result := (Index >= Low(fStrings)) and (Index < fCount); 
 end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.CompareStrings(const Str1, Str2: {$I ESL_StringType.inc}): Integer;
+Function {$I 'ESL_inc\ESL_ListType.inc'}.CompareStrings(const Str1, Str2: {$I 'ESL_inc\ESL_StringType.inc'}): Integer;
 begin
 If fCaseSensitive then
 {$IFDEF FPC}
@@ -615,7 +615,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.CompareItems(Index1,Index2: Integer): Integer;
+Function {$I 'ESL_inc\ESL_ListType.inc'}.CompareItems(Index1,Index2: Integer): Integer;
 begin
 If not CheckIndex(Index1) then
   Error('CompareItems: Index (%d) out of bounds.',[Index1]);
@@ -626,7 +626,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.IndexForSortedAddition(const Str: {$I ESL_StringType.inc}): Integer;
+Function {$I 'ESL_inc\ESL_ListType.inc'}.IndexForSortedAddition(const Str: {$I 'ESL_inc\ESL_StringType.inc'}): Integer;
 var
   M,L,R,D:  Integer;
 begin
@@ -660,7 +660,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TStringEndianness);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TStringEndianness);
 {$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
 var
   Temp: UnicodeString;
@@ -671,17 +671,17 @@ If CheckIndex(Index) then
     If Length(fStrings[Index]) > 0 then
       begin
       {$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
-        Stream.WriteBuffer(fStrings[Index][1],Length(fStrings[Index]) * SizeOf({$I ESL_CharType.inc}));
+        Stream.WriteBuffer(fStrings[Index][1],Length(fStrings[Index]) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
       {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
         If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
           begin
             Temp := fStrings[Index];
             WideSwapEndian(PWideChar(Temp),Length(Temp));
-            Stream.WriteBuffer({$I ESL_PCharType.inc}(Temp)^,Length(Temp) * SizeOf({$I ESL_CharType.inc}));
+            Stream.WriteBuffer({$I 'ESL_inc\ESL_PCharType.inc'}(Temp)^,Length(Temp) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
           end
-        else Stream.WriteBuffer({$I ESL_PCharType.inc}(fStrings[Index])^,Length(fStrings[Index]) * SizeOf({$I ESL_CharType.inc}));
+        else Stream.WriteBuffer({$I 'ESL_inc\ESL_PCharType.inc'}(fStrings[Index])^,Length(fStrings[Index]) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
       {$ELSE}
-        Stream.WriteBuffer({$I ESL_PCharType.inc}(fStrings[Index])^,Length(fStrings[Index]) * SizeOf({$I ESL_CharType.inc}));
+        Stream.WriteBuffer({$I 'ESL_inc\ESL_PCharType.inc'}(fStrings[Index])^,Length(fStrings[Index]) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
       {$IFEND}
       end;
   end
@@ -690,7 +690,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.WriteLineBreakToStream(Stream: TStream; Endianness: TStringEndianness);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.WriteLineBreakToStream(Stream: TStream; Endianness: TStringEndianness);
 {$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
 var
   Temp: UnicodeString;
@@ -699,24 +699,24 @@ begin
 If Length(fLineBreak) > 0 then
   begin
   {$IF Defined(ESL_Short) or Defined(ESL_ShortDefault)}
-    Stream.WriteBuffer(fLineBreak[1],Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
+    Stream.WriteBuffer(fLineBreak[1],Length(fLineBreak) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
   {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
     If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
       begin
         Temp := fLineBreak;
         WideSwapEndian(PWideChar(Temp),Length(Temp));
-        Stream.WriteBuffer({$I ESL_PCharType.inc}(Temp)^,Length(Temp) * SizeOf({$I ESL_CharType.inc}));
+        Stream.WriteBuffer({$I 'ESL_inc\ESL_PCharType.inc'}(Temp)^,Length(Temp) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
       end
-    else Stream.WriteBuffer({$I ESL_PCharType.inc}(fLineBreak)^,Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
+    else Stream.WriteBuffer({$I 'ESL_inc\ESL_PCharType.inc'}(fLineBreak)^,Length(fLineBreak) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
   {$ELSE}
-    Stream.WriteBuffer({$I ESL_PCharType.inc}(fLineBreak)^,Length(fLineBreak) * SizeOf({$I ESL_CharType.inc}));
+    Stream.WriteBuffer({$I 'ESL_inc\ESL_PCharType.inc'}(fLineBreak)^,Length(fLineBreak) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
   {$IFEND}
   end;
 end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.WriteBOMToStream(Stream: TStream; Endianness: TStringEndianness);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.WriteBOMToStream(Stream: TStream; Endianness: TStringEndianness);
 begin
 {$IF Defined(ESL_UTF8)}
   Stream_WriteUInt8(Stream,$EF);
@@ -742,7 +742,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.AssignTo(Dest: TPersistent);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.AssignTo(Dest: TPersistent);
 var
   i:  Integer;
 begin
@@ -775,18 +775,18 @@ end;
     T*StringList - public methods
 -------------------------------------------------------------------------------}
 
-constructor {$I ESL_ListType.inc}.Create;
+constructor {$I 'ESL_inc\ESL_ListType.inc'}.Create;
 begin
 inherited;
 SetLength(fStrings,0);
 fDelimiter := def_Delimiter;
-fLineBreak := {$I ESL_StringType.inc}(def_LineBreak);
+fLineBreak := {$I 'ESL_inc\ESL_StringType.inc'}(def_LineBreak);
 fQuoteChar := def_QuoteChar;
 end;
 
 //------------------------------------------------------------------------------
 
-destructor {$I ESL_ListType.inc}.Destroy;
+destructor {$I 'ESL_inc\ESL_ListType.inc'}.Destroy;
 begin
 SetLength(fStrings,0);
 inherited;
@@ -794,35 +794,35 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.LowIndex: Integer;
+Function {$I 'ESL_inc\ESL_ListType.inc'}.LowIndex: Integer;
 begin
 Result := Low(fStrings);
 end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.HighIndex: Integer;
+Function {$I 'ESL_inc\ESL_ListType.inc'}.HighIndex: Integer;
 begin
 Result := Pred(fCount);
 end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.First: {$I ESL_StringType.inc};
+Function {$I 'ESL_inc\ESL_ListType.inc'}.First: {$I 'ESL_inc\ESL_StringType.inc'};
 begin
 Result := GetItem(LowIndex);
 end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.Last: {$I ESL_StringType.inc};
+Function {$I 'ESL_inc\ESL_ListType.inc'}.Last: {$I 'ESL_inc\ESL_StringType.inc'};
 begin
 Result := GetItem(HighIndex);
 end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.IndexOf(const Str: {$I ESL_StringType.inc}): Integer;
+Function {$I 'ESL_inc\ESL_ListType.inc'}.IndexOf(const Str: {$I 'ESL_inc\ESL_StringType.inc'}): Integer;
 var
   i,L,R,D:  Integer;
 begin
@@ -859,7 +859,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.Find(const Str: {$I ESL_StringType.inc}; out Index: Integer): Boolean;
+Function {$I 'ESL_inc\ESL_ListType.inc'}.Find(const Str: {$I 'ESL_inc\ESL_StringType.inc'}; out Index: Integer): Boolean;
 begin
 Index := IndexOf(Str);
 Result := Index >= LowIndex;
@@ -867,7 +867,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.Add(const Str: {$I ESL_StringType.inc}): Integer;
+Function {$I 'ESL_inc\ESL_ListType.inc'}.Add(const Str: {$I 'ESL_inc\ESL_StringType.inc'}): Integer;
 var
   i:  Integer;
 begin
@@ -895,14 +895,14 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.AddDef(const Str: String): Integer;
+Function {$I 'ESL_inc\ESL_ListType.inc'}.AddDef(const Str: String): Integer;
 begin
 Result := Add(ConvertStringTo(Str));
 end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.AddStrings(Strings: {$I ESL_ListType.inc});
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.AddStrings(Strings: {$I 'ESL_inc\ESL_ListType.inc'});
 var
   i:  Integer;
 begin
@@ -918,7 +918,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.AddStrings(Strings: array of {$I ESL_StringType.inc});
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.AddStrings(Strings: array of {$I 'ESL_inc\ESL_StringType.inc'});
 var
   i:  Integer;
 begin
@@ -934,14 +934,14 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.AddStrings(Strings: TStrings);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.AddStrings(Strings: TStrings);
 begin
 AddStringsDef(Strings);
 end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.AddStringsDef(Strings: TStrings);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.AddStringsDef(Strings: TStrings);
 var
   i:  Integer;
 begin
@@ -957,7 +957,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.AddStringsDef(Strings: array of String);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.AddStringsDef(Strings: array of String);
 var
   i:  Integer;
 begin
@@ -973,14 +973,14 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.Append(const Str: {$I ESL_StringType.inc});
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.Append(const Str: {$I 'ESL_inc\ESL_StringType.inc'});
 begin
 Add(Str);
 end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.Insert(Index: Integer; const Str: {$I ESL_StringType.inc});
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.Insert(Index: Integer; const Str: {$I 'ESL_inc\ESL_StringType.inc'});
 var
   i:  Integer;
 begin
@@ -1008,10 +1008,10 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.Move(SrcIdx, DstIdx: Integer);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.Move(SrcIdx, DstIdx: Integer);
 var
   i:    Integer;
-  Temp: {$I ESL_StringType.inc};
+  Temp: {$I 'ESL_inc\ESL_StringType.inc'};
 begin
 If SrcIdx <> DstIdx then
   begin
@@ -1036,9 +1036,9 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.Exchange(Idx1, Idx2: Integer);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.Exchange(Idx1, Idx2: Integer);
 var
-  Temp: {$I ESL_StringType.inc};
+  Temp: {$I 'ESL_inc\ESL_StringType.inc'};
 begin
 If Idx1 <> Idx2 then
   begin
@@ -1057,7 +1057,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.Extract(const Str: {$I ESL_StringType.inc}): {$I ESL_StringType.inc};
+Function {$I 'ESL_inc\ESL_ListType.inc'}.Extract(const Str: {$I 'ESL_inc\ESL_StringType.inc'}): {$I 'ESL_inc\ESL_StringType.inc'};
 var
   Index:  Integer;
 begin
@@ -1070,7 +1070,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.Remove(const Str: {$I ESL_StringType.inc}): Integer;
+Function {$I 'ESL_inc\ESL_ListType.inc'}.Remove(const Str: {$I 'ESL_inc\ESL_StringType.inc'}): Integer;
 begin
 Result := IndexOf(Str);
 If Result >= 0 then
@@ -1079,7 +1079,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.Delete(Index: Integer);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.Delete(Index: Integer);
 var
   i:  Integer;
 begin
@@ -1097,7 +1097,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.Clear;
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.Clear;
 var
   i:  Integer;
 begin
@@ -1110,7 +1110,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.CustomSort(CompareFunction: {$I ESL_CompFuncType.inc}; Reversed: Boolean = False);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.CustomSort(CompareFunction: {$I 'ESL_inc\ESL_CompFuncType.inc'}; Reversed: Boolean = False);
 
   procedure QuickSort(LeftIdx,RightIdx,Coef: Integer);
   var
@@ -1150,7 +1150,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.Reverse;
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.Reverse;
 var
   i:  Integer;
 begin
@@ -1169,7 +1169,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function {$I ESL_ListType.inc}.Equals(Strings: {$I ESL_ListType.inc}): Boolean;
+Function {$I 'ESL_inc\ESL_ListType.inc'}.Equals(Strings: {$I 'ESL_inc\ESL_ListType.inc'}): Boolean;
 var
   i:  Integer;
 begin
@@ -1188,7 +1188,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetStrings(Strings: {$I ESL_ListType.inc});
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.SetStrings(Strings: {$I 'ESL_inc\ESL_ListType.inc'});
 var
   i:  Integer;
 begin
@@ -1203,7 +1203,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetStrings(Strings: array of {$I ESL_StringType.inc});
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.SetStrings(Strings: array of {$I 'ESL_inc\ESL_StringType.inc'});
 var
   i:  Integer;
 begin
@@ -1218,14 +1218,14 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetStrings(Strings: TStrings);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.SetStrings(Strings: TStrings);
 begin
 SetStringsDef(Strings);
 end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetStringsDef(Strings: TStrings);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.SetStringsDef(Strings: TStrings);
 var
   i:  Integer;
 begin
@@ -1240,7 +1240,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.SetStringsDef(Strings: array of String);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.SetStringsDef(Strings: array of String);
 var
   i:  Integer;
 begin
@@ -1255,7 +1255,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.Assign(Source: TPersistent);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.Assign(Source: TPersistent);
 begin
 BeginUpdate;
 try
@@ -1273,8 +1273,8 @@ try
       fTrailingLineBreak := TStrings(Source).TrailingLineBreak;
     {$ENDIF}
     {$IFEND}
-      fDelimiter := {$I ESL_CharType.inc}(TStrings(Source).Delimiter);
-      fQuoteChar := {$I ESL_CharType.inc}(TStrings(Source).QuoteChar);
+      fDelimiter := {$I 'ESL_inc\ESL_CharType.inc'}(TStrings(Source).Delimiter);
+      fQuoteChar := {$I 'ESL_inc\ESL_CharType.inc'}(TStrings(Source).QuoteChar);
       fSorted := False;
       If Source is TStringList then
         begin
@@ -1282,17 +1282,17 @@ try
           fDuplicates := TStringList(Source).Duplicates;
         end;
     end
-  else If Source is {$I ESL_ListType.inc} then
+  else If Source is {$I 'ESL_inc\ESL_ListType.inc'} then
     begin
       fCaseSensitive := TExplicitStringList(Source).CaseSensitive;
       fStrictDelimiter := TExplicitStringList(Source).StrictDelimiter;
       fTrailingLineBreak := TExplicitStringList(Source).TrailingLineBreak;
       fDuplicates := TExplicitStringList(Source).Duplicates;
       fSorted := TExplicitStringList(Source).Sorted; 
-      SetStrings({$I ESL_ListType.inc}(Source));
-      fDelimiter := {$I ESL_ListType.inc}(Source).Delimiter;
-      fLineBreak := {$I ESL_ListType.inc}(Source).LineBreak;
-      fQuoteChar := {$I ESL_ListType.inc}(Source).QuoteChar;
+      SetStrings({$I 'ESL_inc\ESL_ListType.inc'}(Source));
+      fDelimiter := {$I 'ESL_inc\ESL_ListType.inc'}(Source).Delimiter;
+      fLineBreak := {$I 'ESL_inc\ESL_ListType.inc'}(Source).LineBreak;
+      fQuoteChar := {$I 'ESL_inc\ESL_ListType.inc'}(Source).QuoteChar;
     end
   else inherited;
 finally
@@ -1302,13 +1302,13 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure {$I ESL_ListType.inc}.LoadFromStream(Stream: TStream; out Endianness: TStringEndianness);
+procedure {$I 'ESL_inc\ESL_ListType.inc'}.LoadFromStream(Stream: TStream; out Endianness: TStringEndianness);
 const
   BufferSize = $10000;  // 64KiB buffer
 var
 {$DEFINE ESL_ShortHelper}
   Buffer:     Pointer;
-  TempStr:    {$I ESL_StringType.inc};
+  TempStr:    {$I 'ESL_inc\ESL_StringType.inc'};
   TempStrLen: TStrSize;
   BytesRead:  Integer;
   CharsRead:  TStrSize;
@@ -1318,7 +1318,7 @@ var
   i:          Integer;
 {$IFEND}
 
-  Function BreakPos(const Str: {$I ESL_StringType.inc}; Start: Integer = 1): Integer;
+  Function BreakPos(const Str: {$I 'ESL_inc\ESL_StringType.inc'}; Start: Integer = 1): Integer;
   var
     ii: Integer;
   begin
@@ -1370,10 +1370,10 @@ try
         while Stream.Position < Stream.Size do
           begin
             BytesRead := Stream.Read(Buffer^,BufferSize);
-            CharsRead := BytesRead div SizeOf({$I ESL_CharType.inc});
-            Stream.Seek(-(BytesRead mod SizeOf({$I ESL_CharType.inc})),soCurrent);
+            CharsRead := BytesRead div SizeOf({$I 'ESL_inc\ESL_CharType.inc'});
+            Stream.Seek(-(BytesRead mod SizeOf({$I 'ESL_inc\ESL_CharType.inc'})),soCurrent);
             SetLength(TempStr,TempStrLen + CharsRead);
-            System.Move(Buffer^,TempStr[TempStrLen + 1],(Length(TempStr) - TempStrLen) * SizeOf({$I ESL_CharType.inc}));
+            System.Move(Buffer^,TempStr[TempStrLen + 1],(Length(TempStr) - TempStrLen) * SizeOf({$I 'ESL_inc\ESL_CharType.inc'}));
             TempStrLen := 0;
             repeat
               Position := BreakPos(TempStr,TempStrLen + 1) - 1;

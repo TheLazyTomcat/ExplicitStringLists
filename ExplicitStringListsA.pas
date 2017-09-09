@@ -5,7 +5,7 @@ unit ExplicitStringListsA;
 interface
 
 uses
-  Classes, AuxTypes, ExplicitStringListsBase;
+  Classes, ExplicitStringListsBase;
 
 {===============================================================================
 --------------------------------------------------------------------------------
@@ -21,9 +21,9 @@ uses
 
 type
 {$DEFINE ESL_Short}
-  {$I ESL_CompFuncType.inc} = Function(const Str1,Str2: {$I ESL_StringType.inc}): Integer;
+  {$I 'ESL_inc\ESL_CompFuncType.inc'} = Function(const Str1,Str2: {$I 'ESL_inc\ESL_StringType.inc'}): Integer;
 
-  {$I ESL_ListType.inc} = class(TExplicitStringList)
+  {$I 'ESL_inc\ESL_ListType.inc'} = class(TExplicitStringList)
   protected
     Function GetAnsiText: AnsiString;
     procedure SetAnsiText(const Value: AnsiString);
@@ -40,20 +40,12 @@ type
 {$UNDEF ESL_Short}
 
 {$DEFINE ESL_Ansi}
-  {$I ESL_CompFuncType.inc} = Function(const Str1,Str2: {$I ESL_StringType.inc}): Integer;
+  {$I 'ESL_inc\ESL_CompFuncType.inc'} = Function(const Str1,Str2: {$I 'ESL_inc\ESL_StringType.inc'}): Integer;
 
-  {$I ESL_ListType.inc} = class(TExplicitStringList)
+  {$I 'ESL_inc\ESL_ListType.inc'} = class(TExplicitStringList)
     {$I ExplicitStringLists.inc}
   end;
 {$UNDEF ESL_Ansi}
-
-{$DEFINE ESL_UTF8}
-  {$I ESL_CompFuncType.inc} = Function(const Str1,Str2: {$I ESL_StringType.inc}): Integer;
-
-  {$I ESL_ListType.inc} = class(TExplicitStringList)
-    {$I ExplicitStringLists.inc}
-  end;
-{$UNDEF ESL_UTF8}
 
 {$UNDEF ESL_Declaration}
 
@@ -63,7 +55,7 @@ uses
 {$IF not Defined(FPC) and (CompilerVersion >= 20)}
   (* Delphi2009+ *) Windows, AnsiStrings,
 {$IFEND}
-  SysUtils, StrRect, BinaryStreaming, ExplicitStringListsParser;
+  SysUtils, AuxTypes, StrRect, ExplicitStringListsParser;
 
 {===============================================================================
 --------------------------------------------------------------------------------
@@ -341,10 +333,6 @@ end;
 {$DEFINE ESL_Ansi}
   {$I ExplicitStringLists.inc}
 {$UNDEF ESL_Ansi}
-
-{$DEFINE ESL_UTF8}
-  {$I ExplicitStringLists.inc}
-{$UNDEF ESL_UTF8}
 
 {$UNDEF ESL_Implementation}
 

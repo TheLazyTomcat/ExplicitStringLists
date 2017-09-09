@@ -27,48 +27,48 @@ type
 {$DEFINE ESL_Declaration}
 
 {$DEFINE ESL_Short}
-  {$I ESL_DTParserEventType.inc} = procedure(const Str: {$I ESL_StringType.inc}) of object;
+  {$I 'ESL_inc\ESL_DTParserEventType.inc'} = procedure(const Str: {$I 'ESL_inc\ESL_StringType.inc'}) of object;
 
-  {$I ESL_DTParserType.inc} = class(TObject)
+  {$I 'ESL_inc\ESL_DTParserType.inc'} = class(TObject)
     {$I ExplicitStringListsParser.inc}
   end;
 {$UNDEF ESL_Short}
 
 {$DEFINE ESL_Ansi}
-  {$I ESL_DTParserEventType.inc} = procedure(const Str: {$I ESL_StringType.inc}) of object;
+  {$I 'ESL_inc\ESL_DTParserEventType.inc'} = procedure(const Str: {$I 'ESL_inc\ESL_StringType.inc'}) of object;
 
-  {$I ESL_DTParserType.inc} = class(TObject)
+  {$I 'ESL_inc\ESL_DTParserType.inc'} = class(TObject)
     {$I ExplicitStringListsParser.inc}
   end;
 {$UNDEF ESL_Ansi}
 
 {$DEFINE ESL_UTF8}
-  {$I ESL_DTParserEventType.inc} = procedure(const Str: {$I ESL_StringType.inc}) of object;
+  {$I 'ESL_inc\ESL_DTParserEventType.inc'} = procedure(const Str: {$I 'ESL_inc\ESL_StringType.inc'}) of object;
 
-  {$I ESL_DTParserType.inc} = class(TObject)
+  {$I 'ESL_inc\ESL_DTParserType.inc'} = class(TObject)
     {$I ExplicitStringListsParser.inc}
   end;
 {$UNDEF ESL_UTF8}
 
 {$DEFINE ESL_Wide}
-  {$I ESL_DTParserEventType.inc} = procedure(const Str: {$I ESL_StringType.inc}) of object;
+  {$I 'ESL_inc\ESL_DTParserEventType.inc'} = procedure(const Str: {$I 'ESL_inc\ESL_StringType.inc'}) of object;
 
-  {$I ESL_DTParserType.inc} = class(TObject)
+  {$I 'ESL_inc\ESL_DTParserType.inc'} = class(TObject)
     {$I ExplicitStringListsParser.inc}
   end;
 {$UNDEF ESL_Wide}
 
 {$DEFINE ESL_Unicode}
-  {$I ESL_DTParserEventType.inc} = procedure(const Str: {$I ESL_StringType.inc}) of object;
+  {$I 'ESL_inc\ESL_DTParserEventType.inc'} = procedure(const Str: {$I 'ESL_inc\ESL_StringType.inc'}) of object;
   
-  {$I ESL_DTParserType.inc} = class(TObject)
+  {$I 'ESL_inc\ESL_DTParserType.inc'} = class(TObject)
     {$I ExplicitStringListsParser.inc}
   end;
 {$UNDEF ESL_Unicode}
 
 {$DEFINE ESL_Default}
-  {$I ESL_DTParserEventType.inc} = procedure(const Str: {$I ESL_StringType.inc}) of object;
-  {$I ESL_DTParserType.inc} = class(TObject)
+  {$I 'ESL_inc\ESL_DTParserEventType.inc'} = procedure(const Str: {$I 'ESL_inc\ESL_StringType.inc'}) of object;
+  {$I 'ESL_inc\ESL_DTParserType.inc'} = class(TObject)
     {$I ExplicitStringListsParser.inc}
   end;
 {$UNDEF ESL_Default}

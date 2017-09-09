@@ -1,4 +1,4 @@
-unit ExplicitStringListsW;
+unit ExplicitStringListsO;
 
 {$INCLUDE '.\ExplicitStringLists_defs.inc'}
 
@@ -20,21 +20,21 @@ uses
 {$DEFINE ESL_Declaration}
 
 type
-{$DEFINE ESL_Wide}
+{$DEFINE ESL_UTF8}
   {$I 'ESL_inc\ESL_CompFuncType.inc'} = Function(const Str1,Str2: {$I 'ESL_inc\ESL_StringType.inc'}): Integer;
 
   {$I 'ESL_inc\ESL_ListType.inc'} = class(TExplicitStringList)
     {$I ExplicitStringLists.inc}
   end;
-{$UNDEF ESL_Wide}
+{$UNDEF ESL_UTF8}
 
-{$DEFINE ESL_Unicode}
+{$DEFINE ESL_Default}
   {$I 'ESL_inc\ESL_CompFuncType.inc'} = Function(const Str1,Str2: {$I 'ESL_inc\ESL_StringType.inc'}): Integer;
 
   {$I 'ESL_inc\ESL_ListType.inc'} = class(TExplicitStringList)
     {$I ExplicitStringLists.inc}
   end;
-{$UNDEF ESL_Unicode}
+{$UNDEF ESL_Default}
 
 {$UNDEF ESL_Declaration}
 
@@ -50,18 +50,18 @@ uses
 ===============================================================================}
 
 {===============================================================================
-    T*StringList - implementation
+    T*StringList - declaration
 ===============================================================================}
 
 {$DEFINE ESL_Implementation}
 
-{$DEFINE ESL_Wide}
+{$DEFINE ESL_UTF8}
   {$I ExplicitStringLists.inc}
-{$UNDEF ESL_Wide}
+{$UNDEF ESL_UTF8}
 
-{$DEFINE ESL_Unicode}
+{$DEFINE ESL_Default}
   {$I ExplicitStringLists.inc}
-{$UNDEF ESL_Unicode}
+{$UNDEF ESL_Default}
 
 {$UNDEF ESL_Implementation}
 

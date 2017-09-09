@@ -5,7 +5,7 @@ unit ExplicitStringLists;
 interface
 
 uses
-  ExplicitStringListsA, ExplicitStringListsW;
+  ExplicitStringListsA, ExplicitStringListsW, ExplicitStringListsO;
 
 {===============================================================================
     Forwarded classes
@@ -13,11 +13,12 @@ uses
 type
   TShortStringList = ExplicitStringListsA.TShortStringList;
   TAnsiStringList = ExplicitStringListsA.TAnsiStringList;
-  TUTF8StringList = ExplicitStringListsA.TUTF8StringList;
 
   TWideStringList = ExplicitStringListsW.TWideStringList;
   TUnicodeStringList = ExplicitStringListsW.TUnicodeStringList;
-  TDefaultStringList = ExplicitStringListsW.TDefaultStringList;
+
+  TUTF8StringList = ExplicitStringListsO.TUTF8StringList;
+  TDefaultStringList = ExplicitStringListsO.TDefaultStringList;
 
 implementation
 
