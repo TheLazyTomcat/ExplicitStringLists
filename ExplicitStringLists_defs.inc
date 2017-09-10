@@ -1,5 +1,5 @@
-{$IF not(Defined(WINDOWS) or Defined(MSWINDOWS))}
-  {$MESSAGE FATAL 'Unsupported operating system.'}
+{$IF Defined(WINDOWS) or Defined(MSWINDOWS)}
+  {$DEFINE Windows}
 {$IFEND}
 
 {$IFDEF FPC}
