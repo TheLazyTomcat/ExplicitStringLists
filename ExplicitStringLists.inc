@@ -105,6 +105,7 @@
 
 Function {$I 'ESL_inc\ESL_ListType.inc'}.GetItem(Index: Integer): {$I 'ESL_inc\ESL_StringType.inc'};
 begin
+Result := '';
 If CheckIndex(Index) then
   Result := fStrings[Index]
 else
@@ -128,6 +129,7 @@ end;
 
 Function {$I 'ESL_inc\ESL_ListType.inc'}.GetString(Index: Integer): String;
 begin
+Result := '';
 If CheckIndex(Index) then
   Result := ConvertStringFrom(fStrings[Index])
 else
@@ -1075,7 +1077,8 @@ If Find(Str,Index) then
   begin
     Result := fStrings[Index];
     Delete(Index);
-  end;
+  end
+else Result := '';
 end;
 
 //------------------------------------------------------------------------------
