@@ -879,14 +879,15 @@ Function {$I 'ESL_inc\ESL_ListType.inc'}.Add(const Str: {$I 'ESL_inc\ESL_StringT
 var
   i:  Integer;
 begin
-If Find(Str,Result) then
-  case fDuplicates of
-    dupIgnore:  begin
-                  Result := -1;
-                  Exit;
-                end;
-    dupError:   Error('Add: Duplicit string (%d).',[Result]);
-  end;
+If fDuplicates <> dupAccept then
+  If Find(Str,Result) then
+    case fDuplicates of
+      dupIgnore:  begin
+                    Result := -1;
+                    Exit;
+                  end;
+      dupError:   Error('Add: Duplicit string (%d).',[Result]);
+    end;
 Grow;
 DoChanging;
 If fSorted then
@@ -994,11 +995,12 @@ var
 begin
 If CheckIndex(Index) then
   begin
-    If Find(Str,i) then
-      case fDuplicates of
-        dupIgnore:  Exit;
-        dupError:   Error('Insert: Duplicit string (%d).',[i]);
-      end;
+    If fDuplicates <> dupAccept then
+      If Find(Str,i) then
+        case fDuplicates of
+          dupIgnore:  Exit;
+          dupError:   Error('Insert: Duplicit string (%d).',[i]);
+        end;
     Grow;
     DoChanging;
     For i := HighIndex downto Index do
