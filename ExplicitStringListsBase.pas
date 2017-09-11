@@ -331,13 +331,21 @@ end;
 procedure TExplicitStringList.SaveToStream(Stream: TStream; WriteBOM: Boolean = True; Endianness: TStringEndianness = seSystem);
 var
   WriteSize:  UInt64;
+  OldPos:     Int64;
   i:          Integer;
 begin
 If WriteBOM then
   WriteBOMToStream(Stream,Endianness);
 WriteSize := GetWriteSize;
 If Stream.Size < (Stream.Position + WriteSize) then
-  Stream.Size := Stream.Position + WriteSize;
+  begin
+    OldPos := Stream.Position;
+    try
+      Stream.Size := Stream.Position + WriteSize;
+    finally
+      Stream.Position := OldPos;
+    end;
+  end;
 For i := LowIndex to HighIndex do
   begin
     WriteItemToStream(Stream,i,Endianness);
