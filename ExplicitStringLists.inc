@@ -789,7 +789,9 @@ If Dest is TStrings then
       TStrings(Dest).Add(Strings[i]);
   {$IF Defined(FPC) or (CompilerVersion >= 31)}
     TStrings(Dest).StrictDelimiter := fStrictDelimiter;
+    {$IF Defined(FPC) and (FPC_FULLVERSION >= 30000)}
     TStrings(Dest).LineBreak := ConvertStringFrom(fLineBreak);
+    {$IFEND}
   {$IFNDEF FPC}
     TStrings(Dest).TrailingLineBreak := fTrailingLineBreak;
   {$ENDIF}
@@ -1299,7 +1301,9 @@ try
     }
     {$IF Defined(FPC) or (CompilerVersion >= 31)}
       fStrictDelimiter := TStrings(Source).StrictDelimiter;
+    {$IF Defined(FPC) and (FPC_FULLVERSION >= 30000)}
       fLineBreak := ConvertStringTo(TStrings(Source).LineBreak);
+    {$IFEND}
     {$IFNDEF FPC}
       fTrailingLineBreak := TStrings(Source).TrailingLineBreak;
     {$ENDIF}
