@@ -11,9 +11,9 @@
 
   Part W - lists working with widechar-based strings.
 
-  ©František Milt 2017-09-10
+  ©František Milt 2018-04-30
 
-  Version 1.0
+  Version 1.0.1
 
   Dependencies:
     AuxTypes        - github.com/ncs-sniper/Lib.AuxTypes

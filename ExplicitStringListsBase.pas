@@ -11,9 +11,9 @@
 
   Base class for all explicit string lists.
 
-  ©František Milt 2017-09-10
+  ©František Milt 2018-04-30
 
-  Version 1.0
+  Version 1.0.1
 
   Dependencies:
     AuxTypes        - github.com/ncs-sniper/Lib.AuxTypes
@@ -53,6 +53,9 @@ const
 type
   EExplicitStringListError = Exception;
 
+  TGrowMode = (gmSlow, gmLinear, gmFast, gmFastAttenuated);
+  TShrinkMode = (smKeepCap, smNormal, smToCount);
+
   TStringEndianness = (seSystem,seLittle,seBig);
   TLineBreakStyle = (lbsWIN,lbsUNIX,lbsMAC,lbsCR,lbsLF,lbsCRLF);
 
@@ -61,8 +64,19 @@ type
 ===============================================================================}
   TExplicitStringList = class(TPersistent)
   private
-    fOnChanging:  TNotifyEvent;
-    fOnChange:    TNotifyEvent;
+    // grow/shrink settings
+    fGrowMode:      TGrowMode;
+    fGrowFactor:    Double;
+    fGrowLimit:     Integer;
+    fShrinkMode:    TShrinkMode;
+    fShrinkFactor:  Double;
+    fShrinkLimit:   Integer;
+    // user data
+    fUserIntData:   PtrInt;
+    fUserPtrData:   Pointer;
+    // change events
+    fOnChanging:    TNotifyEvent;
+    fOnChange:      TNotifyEvent;
   protected
     fCount:             Integer;
     fUpdateCount:       Integer;
@@ -73,9 +87,14 @@ type
     fDuplicates:        TDuplicates;
     fSorted:            Boolean;
     Function GetUpdating: Boolean;
+    Function GetCapacity: Integer; virtual; abstract;
+    procedure SetCapacity(Value: Integer); virtual; abstract;
     class procedure Error(const Msg: string; Data: array of const); virtual;
     class Function GetSystemEndianness: TStringEndianness; virtual;
     class procedure WideSwapEndian(Data: PWideChar; Count: TStrSize); virtual;
+    procedure Grow(MinDelta: Integer = 1); virtual;
+    procedure Shrink; virtual;
+    Function CheckIndex(Index: Integer): Boolean; virtual;
     procedure SetUpdateState(Updating: Boolean); virtual;
     Function CompareItems(Index1,Index2: Integer): Integer; virtual; abstract;
     Function GetWriteSize: UInt64; virtual; abstract;
@@ -103,7 +122,19 @@ type
   }
     procedure SaveToStream(Stream: TStream; WriteBOM: Boolean = True; Endianness: TStringEndianness = seSystem); virtual;
     procedure SaveToFile(const FileName: String; WriteBOM: Boolean = True; Endianness: TStringEndianness = seSystem); virtual;
+    // grow/shrink settings
+    property GrowMode: TGrowMode read fGrowMode write fGrowMode;
+    property GrowFactor: Double read fGrowFactor write fGrowFactor;
+    property GrowLimit: Integer read fGrowLimit write fGrowLimit;
+    property ShrinkMode: TShrinkMode read fShrinkMode write fShrinkMode;
+    property ShrinkFactor: Double read fShrinkFactor write fShrinkFactor;
+    property ShrinkLimit: Integer read fShrinkLimit write fShrinkLimit;
+    // user data
+    property UserIntData: PtrInt read fUserIntData write fUserIntData;
+    property UserPtrData: Pointer read fUserPtrData write fUserPtrData;
+    property UserData: PtrInt read fUserIntData write fUserIntData;
   published
+    property Capacity: Integer read GetCapacity write SetCapacity;
     property Count: Integer read fCount;
     property UpdateCount: Integer read fUpdateCount;
     property Updating: Boolean read GetUpdating;
@@ -186,6 +217,63 @@ end;
 
 //------------------------------------------------------------------------------
 
+procedure TExplicitStringList.Grow(MinDelta: Integer = 1);
+var
+  Delta:  Integer;
+begin
+If Count >= Capacity then
+  begin
+    If Capacity = 0 then
+      Delta := 16
+    else
+      case fGrowMode of
+        gmLinear:
+          Delta := Trunc(fGrowFactor);
+        gmFast:
+          Delta := Trunc(Capacity * fGrowFactor);
+        gmFastAttenuated:
+          If Capacity >= fGrowLimit then
+            Delta := fGrowLimit shr 4
+          else
+            Delta := Trunc(Capacity * fGrowFactor);
+      else
+       {gmSlow}
+       Delta := 1;
+      end;
+    If Delta < MinDelta then
+      Delta := MinDelta
+    else If Delta <= 0 then
+      Delta := 1;
+    Capacity := Capacity + Delta;;
+  end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.Shrink;
+begin
+If Capacity > 0 then
+  case fShrinkMode of
+    smNormal:
+      If (Capacity > fShrinkLimit) and (Count < Integer(Trunc((Capacity * fShrinkFactor) / 2))) then
+        Capacity := Trunc(Capacity * fShrinkFactor);
+    smToCount:
+      Capacity := Count;
+  else
+    {smKeepCap}
+    //do nothing
+  end;
+end;
+
+//------------------------------------------------------------------------------
+
+Function TExplicitStringList.CheckIndex(Index: Integer): Boolean;
+begin
+Result := (Index >= LowIndex) and (Index <= HighIndex);
+end;
+
+//------------------------------------------------------------------------------
+
 procedure TExplicitStringList.SetUpdateState(Updating: Boolean);
 begin
 // nothing to do here
@@ -219,6 +307,14 @@ end;
 constructor TExplicitStringList.Create;
 begin
 inherited;
+fGrowMode := gmFast;
+fGrowFactor := 1.0;
+fGrowLimit := 16 * 1024 * 1024;
+fShrinkMode := smNormal;
+fShrinkFactor := 0.5;
+fShrinkLimit := 256;
+fUserIntData := 0;
+fUserPtrData := nil; 
 fOnChanging := nil;
 fOnChange := nil;
 fCount := 0;
