@@ -82,8 +82,9 @@ uses
   SysUtils, StrRect, ExplicitStringListsParser;
 
 {$IFDEF FPC_DisableWarns}
-  {$WARN 4055 OFF} // Conversion between ordinals and pointers is not portable
-  {$WARN 5024 OFF} // Parameter "$1" not used
+  {$DEFINE FPCDWM}
+  {$DEFINE W4055:={$WARN 4055 OFF}} // Conversion between ordinals and pointers is not portable
+  {$DEFINE W5024:={$WARN 5024 OFF}} // Parameter "$1" not used
 {$ENDIF}
 
 {===============================================================================
@@ -177,9 +178,11 @@ try
       begin
         S := C;
         while not IsBreak(C^) do Inc(C);
+      {$IFDEF FPCDWM}{$PUSH}W4055{$ENDIF}
         If (PtrUInt(C) - PtrUInt(S)) > 0 then
           begin
             SetLength(Buff,(PtrUInt(C) - PtrUInt(S)) div SizeOf(AnsiChar));
+      {$IFDEF FPCDWM}{$POP}{$ENDIF}
             System.Move(S^,PAnsiChar(Buff)^,Length(Buff) * SizeOf(AnsiChar));        
             Add(ShortString(Buff));
           end

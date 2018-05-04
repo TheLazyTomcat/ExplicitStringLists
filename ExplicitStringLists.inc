@@ -252,6 +252,7 @@ var
   C,S,E:  {$I 'ESL_inc\ESL_PCharType.inc'};
   Buff:   {$I 'ESL_inc\ESL_StringType.inc'};
 begin
+{$IFDEF FPCDWM}{$PUSH}W4055{$ENDIF}
 BeginUpdate;
 try
   Clear;
@@ -291,6 +292,7 @@ try
 finally
   EndUpdate;
 end;
+{$IFDEF FPCDWM}{$POP}{$ENDIF}
 end;
 
 //------------------------------------------------------------------------------
@@ -656,6 +658,7 @@ end;
 
 //------------------------------------------------------------------------------
 
+{$IFDEF FPCDWM}{$PUSH}W5024{$ENDIF}
 procedure {$I 'ESL_inc\ESL_ListType.inc'}.WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TStringEndianness);
 {$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
 var
@@ -684,9 +687,11 @@ If CheckIndex(Index) then
   end
 else Error('WriteItem: Index (%d) out of bounds.',[Index]);
 end;
+{$IFDEF FPCDWM}{$POP}{$ENDIF}
 
 //------------------------------------------------------------------------------
 
+{$IFDEF FPCDWM}{$PUSH}W5024{$ENDIF}
 procedure {$I 'ESL_inc\ESL_ListType.inc'}.WriteLineBreakToStream(Stream: TStream; Endianness: TStringEndianness);
 {$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(Unicode))}
 var
@@ -711,9 +716,11 @@ If Length(fLineBreak) > 0 then
   {$IFEND}
   end;
 end;
+{$IFDEF FPCDWM}{$POP}{$ENDIF}
 
 //------------------------------------------------------------------------------
 
+{$IFDEF FPCDWM}{$PUSH}W5024{$ENDIF}
 procedure {$I 'ESL_inc\ESL_ListType.inc'}.WriteBOMToStream(Stream: TStream; Endianness: TStringEndianness);
 begin
 {$IF Defined(ESL_UTF8)}
@@ -737,6 +744,7 @@ begin
   end;
 {$IFEND}
 end;
+{$IFDEF FPCDWM}{$POP}{$ENDIF}
 
 //------------------------------------------------------------------------------
 
