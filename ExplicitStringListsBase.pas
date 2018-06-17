@@ -58,7 +58,7 @@ type
   TShrinkMode = (smKeepCap, smNormal, smToCount);
 
   TStringEndianness = (seSystem,seLittle,seBig);
-  TLineBreakStyle = (lbsWIN,lbsUNIX,lbsMAC,lbsRISC,lbsCRLF,lbsLF,lbsCR,lbsLFCR,lbsWINRVRS_);
+  TLineBreakStyle = (lbsWIN,lbsUNIX,lbsMAC,lbsRISC,lbsCRLF,lbsLF,lbsCR,lbsLFCR);
 
 {===============================================================================
     TExplicitStringList - declaration
