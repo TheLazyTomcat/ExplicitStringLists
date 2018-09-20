@@ -11,9 +11,9 @@
 
   Base class for all explicit string lists.
 
-  ©František Milt 2018-05-21
+  ©František Milt 2018-09-20
 
-  Version 1.0.2
+  Version 1.0.3
 
   Dependencies:
     AuxTypes        - github.com/ncs-sniper/Lib.AuxTypes
@@ -361,26 +361,36 @@ end;
 
 procedure TExplicitStringList.Sort(Reversed: Boolean = False);
 
-  procedure QuickSort(LeftIdx,RightIdx,Coef: Integer);
+  procedure QuickSort(Left,Right: Integer; Coef: Integer);
   var
-    Idx,i:  Integer;
+    PivotIdx,LowIdx,HighIdx: Integer;
   begin
-    If LeftIdx < RightIdx then
-      begin
-        Exchange((LeftIdx + RightIdx) shr 1,RightIdx);
-        Idx := LeftIdx;
-        For i := LeftIdx to Pred(RightIdx) do
-          If (CompareItems(RightIdx,i) * Coef) > 0 then
-            begin
-              Exchange(i,idx);
-              Inc(Idx);
-            end;
-        Exchange(Idx,RightIdx);
-        QuickSort(LeftIdx,Idx - 1,Coef);
-        QuickSort(Idx + 1,RightIdx,Coef);
-      end;
+    repeat
+      LowIdx := Left;
+      HighIdx := Right;
+      PivotIdx := (Left + Right) shr 1;
+      repeat
+        while (CompareItems(PivotIdx,LowIdx) * Coef) > 0 do
+          Inc(LowIdx);
+        while (CompareItems(PivotIdx,HighIdx) * Coef) < 0 do
+          Dec(HighIdx);
+        If LowIdx <= HighIdx then
+          begin
+            Exchange(LowIdx,HighIdx);
+            If PivotIdx = LowIdx then
+              PivotIdx := HighIdx
+            else If PivotIdx = HighIdx then
+              PivotIdx := LowIdx;
+            Inc(LowIdx);
+            Dec(HighIdx);  
+          end;
+      until LowIdx > HighIdx;
+      If Left < HighIdx then
+        QuickSort(Left,HighIdx,Coef);
+      Left := LowIdx;
+    until LowIdx >= Right;
   end;
-  
+
 begin
 If fCount > 1 then
   begin

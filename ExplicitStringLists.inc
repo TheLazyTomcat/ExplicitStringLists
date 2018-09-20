@@ -1153,26 +1153,36 @@ end;
 
 procedure {$I 'ESL_inc\ESL_ListType.inc'}.CustomSort(CompareFunction: {$I 'ESL_inc\ESL_CompFuncType.inc'}; Reversed: Boolean = False);
 
-  procedure QuickSort(LeftIdx,RightIdx,Coef: Integer);
+  procedure QuickSort(Left,Right: Integer; Coef: Integer);
   var
-    Idx,i:  Integer;
+    PivotIdx,LowIdx,HighIdx: Integer;
   begin
-    If LeftIdx < RightIdx then
-      begin
-        Exchange((LeftIdx + RightIdx) shr 1,RightIdx);
-        Idx := LeftIdx;
-        For i := LeftIdx to Pred(RightIdx) do
-          If (CompareFunction(fStrings[RightIdx],fStrings[i]) * Coef) > 0 then
-            begin
-              Exchange(i,idx);
-              Inc(Idx);
-            end;
-        Exchange(Idx,RightIdx);
-        QuickSort(LeftIdx,Idx - 1,Coef);
-        QuickSort(Idx + 1,RightIdx,Coef);
-      end;
+    repeat
+      LowIdx := Left;
+      HighIdx := Right;
+      PivotIdx := (Left + Right) shr 1;
+      repeat
+        while (CompareFunction(fStrings[PivotIdx],fStrings[LowIdx]) * Coef) > 0 do
+          Inc(LowIdx);
+        while (CompareFunction(fStrings[PivotIdx],fStrings[HighIdx]) * Coef) < 0 do
+          Dec(HighIdx);
+        If LowIdx <= HighIdx then
+          begin
+            Exchange(LowIdx,HighIdx);
+            If PivotIdx = LowIdx then
+              PivotIdx := HighIdx
+            else If PivotIdx = HighIdx then
+              PivotIdx := LowIdx;
+            Inc(LowIdx);
+            Dec(HighIdx);  
+          end;
+      until LowIdx > HighIdx;
+      If Left < HighIdx then
+        QuickSort(Left,HighIdx,Coef);
+      Left := LowIdx;
+    until LowIdx >= Right;
   end;
-  
+
 begin
 If fCount > 1 then
   begin

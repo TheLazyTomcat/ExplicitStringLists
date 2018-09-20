@@ -11,9 +11,9 @@
 
   Part O - lists working with strings not explicitly based on ansi or widechars.
 
-  ©František Milt 2018-05-21
+  ©František Milt 2018-09-20
 
-  Version 1.0.2
+  Version 1.0.3
 
   Dependencies:
     AuxTypes        - github.com/ncs-sniper/Lib.AuxTypes
