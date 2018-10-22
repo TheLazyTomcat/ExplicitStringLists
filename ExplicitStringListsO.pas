@@ -11,15 +11,16 @@
 
   Part O - lists working with strings not explicitly based on ansi or widechars.
 
-  ©František Milt 2018-09-20
+  ©František Milt 2018-10-21
 
-  Version 1.0.3
+  Version 1.0.4
 
   Dependencies:
     AuxTypes        - github.com/ncs-sniper/Lib.AuxTypes
     AuxClasses      - github.com/ncs-sniper/Lib.AuxClasses
     StrRect         - github.com/ncs-sniper/Lib.StrRect
     BinaryStreaming - github.com/ncs-sniper/Lib.BinaryStreaming
+    IndexSorters    - github.com/ncs-sniper/Lib.IndexSorters
 
 ===============================================================================}
 unit ExplicitStringListsO;
@@ -65,7 +66,7 @@ type
 implementation
 
 uses
-  SysUtils, StrRect, BinaryStreaming, ExplicitStringListsParser;
+  SysUtils, StrRect, BinaryStreaming, IndexSorters, ExplicitStringListsParser;
 
 {$IFDEF FPC_DisableWarns}
   {$DEFINE FPCDWM}

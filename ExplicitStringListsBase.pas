@@ -11,15 +11,16 @@
 
   Base class for all explicit string lists.
 
-  ©František Milt 2018-09-20
+  ©František Milt 2018-10-21
 
-  Version 1.0.3
+  Version 1.0.4
 
   Dependencies:
     AuxTypes        - github.com/ncs-sniper/Lib.AuxTypes
     AuxClasses      - github.com/ncs-sniper/Lib.AuxClasses
     StrRect         - github.com/ncs-sniper/Lib.StrRect
     BinaryStreaming - github.com/ncs-sniper/Lib.BinaryStreaming
+    IndexSorters    - github.com/ncs-sniper/Lib.IndexSorters
 
 ===============================================================================}
 unit ExplicitStringListsBase;
@@ -134,7 +135,6 @@ type
     property UserIntData: PtrInt read fUserIntData write fUserIntData;
     property UserPtrData: Pointer read fUserPtrData write fUserPtrData;
     property UserData: PtrInt read fUserIntData write fUserIntData;
-  published
     property Capacity: Integer read GetCapacity write SetCapacity;
     property Count: Integer read fCount;
     property UpdateCount: Integer read fUpdateCount;
@@ -152,7 +152,7 @@ type
 implementation
 
 uses
-  StrRect;
+  StrRect, IndexSorters;
 
 {$IFDEF FPC_DisableWarns}
   {$DEFINE FPCDWM}
@@ -360,46 +360,21 @@ end;
 //------------------------------------------------------------------------------
 
 procedure TExplicitStringList.Sort(Reversed: Boolean = False);
-
-  procedure QuickSort(Left,Right: Integer; Coef: Integer);
-  var
-    PivotIdx,LowIdx,HighIdx: Integer;
-  begin
-    repeat
-      LowIdx := Left;
-      HighIdx := Right;
-      PivotIdx := (Left + Right) shr 1;
-      repeat
-        while (CompareItems(PivotIdx,LowIdx) * Coef) > 0 do
-          Inc(LowIdx);
-        while (CompareItems(PivotIdx,HighIdx) * Coef) < 0 do
-          Dec(HighIdx);
-        If LowIdx <= HighIdx then
-          begin
-            Exchange(LowIdx,HighIdx);
-            If PivotIdx = LowIdx then
-              PivotIdx := HighIdx
-            else If PivotIdx = HighIdx then
-              PivotIdx := LowIdx;
-            Inc(LowIdx);
-            Dec(HighIdx);  
-          end;
-      until LowIdx > HighIdx;
-      If Left < HighIdx then
-        QuickSort(Left,HighIdx,Coef);
-      Left := LowIdx;
-    until LowIdx >= Right;
-  end;
-
+var
+  Sorter: TIndexQuickSorter;
 begin
 If fCount > 1 then
   begin
     BeginUpdate;
     try
-      If Reversed then
-        QuickSort(LowIndex,HighIndex,-1)
-      else
-        QuickSort(LowIndex,HighIndex,1);
+      Sorter := TIndexQuickSorter.Create(CompareItems,Exchange);
+      try
+        Sorter.ReversedCompare := True;
+        Sorter.Reversed := Reversed;
+        Sorter.Sort(LowIndex,HighIndex);
+      finally
+        Sorter.Free;
+      end;
       fSorted := not Reversed;
     finally
       EndUpdate;

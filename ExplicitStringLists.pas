@@ -9,15 +9,16 @@
 
   Explicit string lists
 
-  ©František Milt 2018-09-20
+  ©František Milt 2018-10-21
 
-  Version 1.0.3
+  Version 1.0.4
 
   Dependencies:
     AuxTypes        - github.com/ncs-sniper/Lib.AuxTypes
     AuxClasses      - github.com/ncs-sniper/Lib.AuxClasses
     StrRect         - github.com/ncs-sniper/Lib.StrRect
     BinaryStreaming - github.com/ncs-sniper/Lib.BinaryStreaming
+    IndexSorters    - github.com/ncs-sniper/Lib.IndexSorters
 
 ===============================================================================}
 unit ExplicitStringLists;
