@@ -20,7 +20,7 @@
     AuxClasses      - github.com/ncs-sniper/Lib.AuxClasses
     StrRect         - github.com/ncs-sniper/Lib.StrRect
     BinaryStreaming - github.com/ncs-sniper/Lib.BinaryStreaming
-    IndexSorters    - github.com/ncs-sniper/Lib.IndexSorters
+    ListSorters     - github.com/ncs-sniper/Lib.ListSorters
 
 ===============================================================================}
 unit ExplicitStringListsParser;

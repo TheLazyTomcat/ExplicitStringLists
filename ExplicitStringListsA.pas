@@ -20,7 +20,7 @@
     AuxClasses      - github.com/ncs-sniper/Lib.AuxClasses
     StrRect         - github.com/ncs-sniper/Lib.StrRect
     BinaryStreaming - github.com/ncs-sniper/Lib.BinaryStreaming
-    IndexSorters    - github.com/ncs-sniper/Lib.IndexSorters
+    ListSorters     - github.com/ncs-sniper/Lib.ListSorters
 
 ===============================================================================}
 unit ExplicitStringListsA;
@@ -79,7 +79,7 @@ uses
 {$IF not Defined(FPC) and (CompilerVersion >= 20)}(* Delphi2009+ *)
   {$IFDEF Windows} Windows,{$ENDIF} AnsiStrings,
 {$IFEND}
-  SysUtils, StrRect, IndexSorters, ExplicitStringListsParser;
+  SysUtils, StrRect, ListSorters, ExplicitStringListsParser;
 
 {$IFDEF FPC_DisableWarns}
   {$DEFINE FPCDWM}

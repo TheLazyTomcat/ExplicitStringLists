@@ -1166,14 +1166,14 @@ end;
 
 procedure {$I 'ESL_inc\ESL_ListType.inc'}.CustomSort(CompareFunction: {$I 'ESL_inc\ESL_CompFuncType.inc'}; Reversed: Boolean = False);
 var
-  Sorter: TIndexQuickSorter;
+  Sorter: TListQuickSorter;
 begin
 If fCount > 1 then
   begin
     fCustomCompareFunction := CompareFunction;
     BeginUpdate;
     try
-      Sorter := TIndexQuickSorter.Create(CustomCompareItems,Exchange);
+      Sorter := TListQuickSorter.Create(CustomCompareItems,Exchange);
       try
         Sorter.ReversedCompare := True;
         Sorter.Reversed := Reversed;

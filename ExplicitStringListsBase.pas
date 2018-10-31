@@ -20,7 +20,7 @@
     AuxClasses      - github.com/ncs-sniper/Lib.AuxClasses
     StrRect         - github.com/ncs-sniper/Lib.StrRect
     BinaryStreaming - github.com/ncs-sniper/Lib.BinaryStreaming
-    IndexSorters    - github.com/ncs-sniper/Lib.IndexSorters
+    ListSorters     - github.com/ncs-sniper/Lib.ListSorters
 
 ===============================================================================}
 unit ExplicitStringListsBase;
@@ -152,7 +152,7 @@ type
 implementation
 
 uses
-  StrRect, IndexSorters;
+  StrRect, ListSorters;
 
 {$IFDEF FPC_DisableWarns}
   {$DEFINE FPCDWM}
@@ -361,13 +361,13 @@ end;
 
 procedure TExplicitStringList.Sort(Reversed: Boolean = False);
 var
-  Sorter: TIndexQuickSorter;
+  Sorter: TListQuickSorter;
 begin
 If fCount > 1 then
   begin
     BeginUpdate;
     try
-      Sorter := TIndexQuickSorter.Create(CompareItems,Exchange);
+      Sorter := TListQuickSorter.Create(CompareItems,Exchange);
       try
         Sorter.ReversedCompare := True;
         Sorter.Reversed := Reversed;
