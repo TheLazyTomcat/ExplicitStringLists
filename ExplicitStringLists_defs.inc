@@ -18,6 +18,10 @@
 {$ENDIF}
 
 // don't touch following
+{$UNDEF ESL_ClassAuxiliary}
+{$UNDEF ESL_ClassDeclaration}
+{$UNDEF ESL_ClassImplementation}
+
 {$UNDEF ESL_Short}
 {$UNDEF ESL_Ansi}
 {$UNDEF ESL_UTF8}
