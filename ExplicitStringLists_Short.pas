@@ -1,4 +1,4 @@
-unit ExplicitStringLists_Ansi;
+unit ExplicitStringLists_Short;
 
 {$INCLUDE '.\ExplicitStringLists_defs.inc'}
 
@@ -8,33 +8,33 @@ uses
   AuxTypes,
   ExplicitStringLists_Base;
 
-{$DEFINE ESL_Ansi}
+{$DEFINE ESL_Short}
 
 type
   TESLCharType   = AnsiChar;
-  TESLStringType = AnsiString;
+  TESLStringType = ShortString;
 
 type
-  TAnsiStringList = class;
+  TShortStringList = class;
 
-  TESLAnsiSortCompareIndex  = Function(List: TAnsiStringList; Idx1,Idx2: Integer): Integer;
-  TESLAnsiSortCompareString = Function(List: TAnsiStringList; const Str1,Str2: TESLStringType): Integer;
+  TESLShortSortCompareIndex  = Function(List: TShortStringList; Idx1,Idx2: Integer): Integer;
+  TESLShortSortCompareString = Function(List: TShortStringList; const Str1,Str2: TESLStringType): Integer;
 
-  TESLSortCompareIndexType  = TESLAnsiSortCompareIndex;
-  TESLSortCompareStringType = TESLAnsiSortCompareString;
+  TESLSortCompareIndexType  = TESLShortSortCompareIndex;
+  TESLSortCompareStringType = TESLShortSortCompareString;
 
   {$DEFINE ESL_ClassTypes}
     {$INCLUDE './ExplicitStringLists.inc'}
   {$UNDEF ESL_ClassTypes}
 
-  TAnsiStringList = class(TExplicitStringList)
+  TShortStringList = class(TExplicitStringList)
   {$DEFINE ESL_ClassDeclaration}
     {$INCLUDE './ExplicitStringLists.inc'}
   {$UNDEF ESL_ClassDeclaration}
   end;
 
 type
-  TESLClassType = TAnsiStringList;
+  TESLClassType = TShortStringList;
 
 implementation
 
@@ -47,7 +47,4 @@ uses
 {$UNDEF ESL_ClassImplementation}
 
 end.
-
-
-
 

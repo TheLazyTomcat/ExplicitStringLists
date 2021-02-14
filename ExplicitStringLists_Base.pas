@@ -34,90 +34,100 @@ type
   TExplicitStringList = class(TCustomListObject)
   protected
     // list data
-    fObjects:                 array of TObject;
     fCount:                   Integer;
     // updating/changing
-    fUpdateCounter:           Integer;
-    fChangeFlags:             array of Boolean;
-    fChanged:                 Boolean;
+    fUpdateCount:             Integer;
+    fListChanged:             Boolean;
     // list settings
     fOwnsObjects:             Boolean;
     fCaseSensitive:           Boolean;  // affects sorting and searching
-    fStrictDelimiter:         Boolean;
-    fTrailingLineBreak:       Boolean;
-    fDuplicates:              TDuplicates;
+    //fStrictDelimiter:         Boolean;
+    //fTrailingLineBreak:       Boolean;
+    //fDuplicates:              TDuplicates;
     fSorted:                  Boolean;
+    fStrictSorted:            Boolean;
     // change events
     fOnItemChangingCallback:  TIndexCallback;
     fOnItemChangingEvent:     TIndexEvent;
     fOnItemChangeCallback:    TIndexCallback;
     fOnItemChangeEvent:       TIndexEvent;
+    fOnListChangingCallback:  TNotifyCallback;
+    fOnListChangingEvent:     TNotifyEvent;
+    fOnListChangeCallback:    TNotifyCallback;
+    fOnListChangeEvent:       TNotifyEvent;
     fOnChangingCallback:      TNotifyCallback;
     fOnChangingEvent:         TNotifyEvent;
     fOnChangeCallback:        TNotifyCallback;
     fOnChangeEvent:           TNotifyEvent;
     // getters, setters
-    Function GetObject(Index: Integer): TObject; virtual;
-    procedure SetObject(Index: Integer; Value: TObject); virtual;
+    Function GetObject(Index: Integer): TObject; virtual; abstract;
+    procedure SetObject(Index: Integer; Value: TObject); virtual; abstract;
+    Function GetChanged(Index: Integer): Boolean; virtual; abstract;
+    procedure SetChanged(Index: Integer; Value: Boolean); virtual; abstract;
     Function GetString(Index: Integer): String; virtual; abstract;
     procedure SetString(Index: Integer; const Value: String); virtual; abstract;
     Function GetUpdating: Boolean; virtual;
     procedure SetSorted(Value: Boolean); virtual;
-    Function GetLineBreakStyle: TESLLineBreakStyle; virtual; abstract;
-    procedure SetLineBreakStyle(Value: TESLLineBreakStyle); virtual; abstract;
-    // list methods
-    Function GetCapacity: Integer; override;
+    //Function GetLineBreakStyle: TESLLineBreakStyle; virtual; abstract;
+    //procedure SetLineBreakStyle(Value: TESLLineBreakStyle); virtual; abstract;
+    // inherited list methods
     procedure SetCapacity(Value: Integer); override;
     Function GetCount: Integer; override;
     procedure SetCount(Value: Integer); override;
-    // list manipulation
-    procedure SetArraysLength(NewLen: Integer); virtual;
-    procedure ClearArrayItem(Index: Integer); virtual;
-    // change events
-    procedure DoItemChanging(Index: Integer); virtual;  
-    procedure DoItemChange(Index: Integer); virtual;
+    // list manipulation methods
+    procedure SetArrayLength(NewLen: Integer); virtual; abstract;
+    procedure ClearArrayItem(Index: Integer; CanFreeObj: Boolean = True); virtual; abstract;
+    // change events methods
+    procedure DoItemChanging(Index: Integer; CallChanging: Boolean = True); virtual;
+    procedure DoItemChange(Index: Integer; CallChange: Boolean = True); virtual;
+    procedure DoListChanging(CallChanging: Boolean = True); virtual;
+    procedure DoListChange(CallChange: Boolean = True); virtual;
     procedure DoChanging; virtual;
     procedure DoChange; virtual;
-    // initialization, finalalization
+    // initialization, finalization methods
     procedure Initialize; virtual;
     procedure Finalize; virtual;
     // auxiliary methods
-    Function CompareItems(Idx1,Idx2: Integer): Integer; virtual; abstract;  // for sorting
-    Function GetWriteSize: TMemSize; virtual; abstract;                     // for preallocations    
-    class procedure WideSwapEndian(Data: PWideChar; Count: TStrSize); virtual;
+    Function SortCompare(Idx1,Idx2: Integer): Integer; virtual; abstract;    
+    procedure SortItems(Reversed: Boolean = False); virtual;
+    //Function GetWriteSize: TMemSize; virtual; abstract;                 // for preallocations
+    //class procedure WideSwapEndian(Data: PWideChar; Count: TStrSize); virtual;
   public
-    class Function GetSystemEndianness: TESLStringEndianness; virtual;      // can only return seLittle or seBig, never seSystem
+    class Function GetSystemEndianness: TESLStringEndianness; virtual;    // can only return seLittle or seBig, never seSystem
     constructor Create;
     destructor Destroy; override;
     // update methods
     Function BeginUpdate: Integer; virtual;
     Function EndUpdate: Integer; virtual;
     // list index methods
-    Function LowIndex: Integer; override;
     Function HighIndex: Integer; override;
-    // list item methods
-    Function IndexOf(Obj: TObject): Integer; overload; virtual;
-    Function Find(Obj: TObject; out Index: Integer): Boolean; overload; virtual;
-    Function AddDef(const Str: String): Integer; overload; virtual; abstract;
-    Function AddObjectDef(const Str: String; Obj: TObject): Integer; overload; virtual; abstract;
-    procedure AddStrings(Strings: TStrings); overload; virtual;
-    procedure AddStringsDef(Strings: TStrings); overload; virtual; abstract;
-    procedure AddStringsDef(Strings: array of String); overload; virtual; abstract;
-    procedure Insert(Index: Integer; const Str: String); overload; virtual; abstract;
-    procedure InsertObject(Index: Integer; const Str: String); overload; virtual; abstract;
-    procedure Move(Src,Dst: Integer); virtual; abstract;
+    // list items methods
+    Function IndexOfObject(Obj: TObject): Integer; virtual; abstract;
+    Function IndexOfString(const Str: String): Integer; virtual; abstract;
+    Function FindObject(Obj: TObject; out Index: Integer): Boolean; virtual; abstract;
+    Function FindString(const Str: String; out Index: Integer): Boolean; virtual; abstract;
+    Function AddString(const Str: String): Integer; virtual; abstract;
+    Function AddStringObject(const Str: String; Obj: TObject): Integer; virtual; abstract;
+
+    //procedure AddStrings(Strings: TStrings); overload; virtual;
+    //procedure AddStringsDef(Strings: TStrings); overload; virtual; abstract;
+    //procedure AddStringsDef(Strings: array of String); overload; virtual; abstract;
+    //procedure Insert(Index: Integer; const Str: String); overload; virtual; abstract;
+    //procedure InsertObject(Index: Integer; const Str: String); overload; virtual; abstract;
+    //procedure Move(Src,Dst: Integer); virtual; abstract;
     procedure Exchange(Idx1,Idx2: Integer); virtual; abstract;
-    Function Extract(Obj: TObject): TObject; overload; virtual;
-    Function Remove(Obj: TObject): Integer; overload; virtual;
+
+    //Function Extract(Obj: TObject): TObject; overload; virtual;
+    //Function Remove(Obj: TObject): Integer; overload; virtual;
     procedure Delete(Index: Integer); virtual; abstract;
     procedure Clear; virtual;
-    // list manipulation
-    procedure Sort(Reversed: Boolean = False); virtual;
+    // list manipulation methods
+    procedure Sort(Reversed: Boolean = False); virtual; abstract;
     // procedure Assign(Source: TExplicitStringList); overload; virtual;
     // procedure Assign(Source: TStrings); overload; virtual;
     // procedure AssignTo(Destination: TExplicitStringList); overload; virtual;
     // procedure AssignTo(Destination: TStrings); overload; virtual;
-    // streaming
+    // streaming methods
     //procedure LoadFromStream(Stream: TStream; out Endianness: TStringEndianness); overload; virtual; abstract;
     //procedure LoadFromStream(Stream: TStream); overload; virtual;
     //procedure LoadFromFile(const FileName: String; out Endianness: TStringEndianness); overload; virtual;
@@ -129,26 +139,34 @@ type
   }
     //procedure SaveToStream(Stream: TStream; WriteBOM: Boolean = True; Endianness: TStringEndianness = seSystem); virtual;
     //procedure SaveToFile(const FileName: String; WriteBOM: Boolean = True; Endianness: TStringEndianness = seSystem); virtual;
-    // list data
+    // list data properties
     property Objects[Index: Integer]: TObject read GetObject write SetObject;
     property Strings[Index: Integer]: String read GetString write SetString;
-    // updating
+    // updating properties
     property Updating: Boolean read GetUpdating;
-    // list settings
+    property UpdateCount: Integer read fUpdateCount;
+    // settings properties
     property OwnsObjects: Boolean read fOwnsObjects write fOwnsObjects;
     property CaseSensitive: Boolean read fCaseSensitive write fCaseSensitive;
-    property StrictDelimiter: Boolean read fStrictDelimiter write fStrictDelimiter;
-    property TrailingLineBreak: Boolean read fTrailingLineBreak write fTrailingLineBreak;
-    property Duplicates: TDuplicates read fDuplicates write fDuplicates;
+    //property StrictDelimiter: Boolean read fStrictDelimiter write fStrictDelimiter;
+    //property TrailingLineBreak: Boolean read fTrailingLineBreak write fTrailingLineBreak;
+    //property Duplicates: TDuplicates read fDuplicates write fDuplicates;
     property Sorted: Boolean read fSorted write SetSorted;
-    property LineBreakStyle: TESLLineBreakStyle read GetLineBreakStyle write SetLineBreakStyle;
-    // change events
+    property StrictSorted: Boolean read fStrictSorted write fStrictSorted;
+    //property LineBreakStyle: TESLLineBreakStyle read GetLineBreakStyle write SetLineBreakStyle;
+    // change events properties
     property OnItemChangingCallback: TIndexCallback read fOnItemChangingCallback write fOnItemChangingCallback;
     property OnItemChangingEvent: TIndexEvent read fOnItemChangingEvent write fOnItemChangingEvent;
     property OnItemChanging: TIndexEvent read fOnItemChangingEvent write fOnItemChangingEvent;
     property OnItemChangeCallback: TIndexCallback read fOnItemChangeCallback write fOnItemChangeCallback;
     property OnItemChangeEvent: TIndexEvent read fOnItemChangeEvent write fOnItemChangeEvent;
     property OnItemChange: TIndexEvent read fOnItemChangeEvent write fOnItemChangeEvent;
+    property OnListChangingCallback: TNotifyCallback read fOnListChangingCallback write fOnListChangingCallback;
+    property OnListChangingEvent: TNotifyEvent read fOnListChangingEvent write fOnListChangingEvent;
+    property OnListChanging: TNotifyEvent read fOnListChangingEvent write fOnListChangingEvent;
+    property OnListChangeCallback: TNotifyCallback read fOnListChangeCallback write fOnListChangeCallback;
+    property OnListChangeEvent: TNotifyEvent read fOnListChangeEvent write fOnListChangeEvent;
+    property OnListChange: TNotifyEvent read fOnListChangeEvent write fOnListChangeEvent;
     property OnChangingCallback: TNotifyCallback read fOnChangingCallback write fOnChangingCallback;
     property OnChangingEvent: TNotifyEvent read fOnChangingEvent write fOnChangingEvent;
     property OnChanging: TNotifyEvent read fOnChangingEvent write fOnChangingEvent;
@@ -174,34 +192,9 @@ uses
     TExplicitStringList - protected methods
 -------------------------------------------------------------------------------}
 
-Function TExplicitStringList.GetObject(Index: Integer): TObject;
-begin
-If CheckIndex(Index) then
-  Result := fObjects[Index]
-else
-  raise EESLIndexOutOfBounds.CreateFmt('TExplicitStringList.GetObject: Index (%d) out of bounds.',[Index]);
-end;
-
-//------------------------------------------------------------------------------
-
-procedure TExplicitStringList.SetObject(Index: Integer; Value: TObject);
-begin
-If CheckIndex(Index) then
-  begin
-    DoItemChanging(Index);
-    If Assigned(fObjects[Index]) and fOwnsObjects then
-      FreeAndNil(fObjects[Index]);
-    fObjects[Index] := Value;
-    DoItemChange(Index);
-  end
-else raise EESLIndexOutOfBounds.CreateFmt('TExplicitStringList.SetObject: Index (%d) out of bounds.',[Index]);
-end;
-
-//------------------------------------------------------------------------------
-
 Function TExplicitStringList.GetUpdating: Boolean;
 begin
-Result := fUpdateCounter > 0;
+Result := fUpdateCount > 0;
 end;
 
 //------------------------------------------------------------------------------
@@ -218,13 +211,6 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function TExplicitStringList.GetCapacity: Integer;
-begin
-Result := Length(fObjects);
-end;
-
-//------------------------------------------------------------------------------
-
 procedure TExplicitStringList.SetCapacity(Value: Integer);
 var
   OldCap: Integer;
@@ -232,11 +218,11 @@ var
 begin
 If Value >= 0 then
   begin
-    OldCap := Length(fObjects);
+    OldCap := Capacity;
     If Value > OldCap then
       begin
         // increasing capacity
-        SetArraysLength(Value);
+        SetArrayLength(Value);
         For i := OldCap to Pred(Value) do
           ClearArrayItem(i);
       end
@@ -245,15 +231,15 @@ If Value >= 0 then
         // decreasing capacity
         If Value < fCount then
           begin
-            DoChanging;
+            DoListChanging;
             For i := Value to Pred(fCount) do
               ClearArrayItem(i);
           end;
-        SetArraysLength(Value);
+        SetArrayLength(Value);
         If Value < fCount then
           begin
             fCount := Value;
-            DoChange;
+            DoListChange;
           end;
       end;
   end
@@ -277,7 +263,7 @@ If Value >= 0 then
   begin
     If Value <> fCount then
       begin
-        DoChanging;
+        DoListChanging;
         If Value > fCount then
           begin
             If Value > Capacity then
@@ -289,7 +275,7 @@ If Value >= 0 then
           For i := Value to Pred(fCount) do
             ClearArrayItem(i);
         fCount := Value;
-        DoChange;
+        DoListChange;
       end;
   end
 else raise EESLInvalidValue.CreateFmt('TExplicitStringList.SetCount: Invalid count (%d).',[Value]);
@@ -297,70 +283,75 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TExplicitStringList.SetArraysLength(NewLen: Integer);
+procedure TExplicitStringList.DoItemChanging(Index: Integer; CallChanging: Boolean = True);
 begin
-SetLength(fObjects,NewLen);
-SetLength(fChangeFlags,NewLen);
+If CallChanging then
+  DoChanging;
+If Assigned(fOnItemChangingCallback) then
+  fOnItemChangingCallback(Self,Index);
+If Assigned(fOnItemChangingEvent) then
+  fOnItemChangingEvent(Self,Index);
 end;
 
 //------------------------------------------------------------------------------
 
-procedure TExplicitStringList.ClearArrayItem(Index: Integer);
+procedure TExplicitStringList.DoItemChange(Index: Integer; CallChange: Boolean = True);
 begin
-If Assigned(fObjects[Index]) and fOwnsObjects then
-  FreeAndNil(fObjects[Index])
-else
-  fObjects[Index] := nil;
-fChangeFlags[Index] := False;
-end;
-
-//------------------------------------------------------------------------------
-
-procedure TExplicitStringList.DoItemChanging(Index: Integer);
-begin
-If fUpdateCounter <= 0 then
-  begin
-    If Assigned(fOnItemChangingCallback) then
-      fOnItemChangingCallback(Self,Index);
-    If Assigned(fOnItemChangingEvent) then
-      fOnItemChangingEvent(Self,Index);
-  end;
-end;
-
-//------------------------------------------------------------------------------
-
-procedure TExplicitStringList.DoItemChange(Index: Integer);
-begin
-fChangeFlags[Index] := True;
-fChanged := True;
-If fUpdateCounter <= 0 then
+SetChanged(Index,True);
+If fUpdateCount <= 0 then
   begin
     If Assigned(fOnItemChangeCallback) then
       fOnItemChangeCallback(Self,Index);
     If Assigned(fOnItemChangeEvent) then
       fOnItemChangeEvent(Self,Index);
   end;
+If CallChange then
+  DoChange;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.DoListChanging(CallChanging: Boolean = True);
+begin
+If CallChanging then
+  DoChanging;
+If Assigned(fOnListChangingCallback) then
+  fOnListChangingCallback(Self);
+If Assigned(fOnListChangingEvent) then
+  fOnListChangingEvent(Self);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.DoListChange(CallChange: Boolean = True);
+begin
+fListChanged := True;
+If fUpdateCount <= 0 then
+  begin
+    If Assigned(fOnListChangeCallback) then
+      fOnListChangeCallback(Self);
+    If Assigned(fOnListChangeEvent) then
+      fOnListChangeEvent(Self);
+  end;
+If CallChange then
+  DoChange;
 end;
 
 //------------------------------------------------------------------------------
 
 procedure TExplicitStringList.DoChanging;
 begin
-If fUpdateCounter <= 0 then
-  begin
-    If Assigned(fOnChangingCallback) then
-      fOnChangingCallback(Self);
-    If Assigned(fOnChangingEvent) then
-      fOnChangingEvent(Self);
-  end;
+If Assigned(fOnChangingCallback) then
+  fOnChangingCallback(Self);
+If Assigned(fOnChangingEvent) then
+  fOnChangingEvent(Self);
 end;
 
 //------------------------------------------------------------------------------
 
 procedure TExplicitStringList.DoChange;
 begin
-fChanged := True;
-If fUpdateCounter <= 0 then
+If fUpdateCount <= 0 then
   begin
     If Assigned(fOnChangeCallback) then
       fOnChangeCallback(Self);
@@ -373,17 +364,16 @@ end;
 
 procedure TExplicitStringList.Initialize;
 begin
-SetLength(fObjects,0);
-SetLength(fChangeFlags,0);
 fCount := 0;
-fUpdateCounter := 0;
-fChanged := False;
+fUpdateCount := 0;
+fListChanged := False;
 fOwnsObjects := False;
 fCaseSensitive := False;
-fStrictDelimiter := False;
-fTrailingLineBreak := True;
-fDuplicates := dupAccept;
+//fStrictDelimiter := False;
+//fTrailingLineBreak := True;
+//fDuplicates := dupAccept;
 fSorted := False;
+fStrictSorted := True;
 end;
 
 //------------------------------------------------------------------------------
@@ -395,6 +385,10 @@ fOnItemChangingCallback := nil;
 fOnItemChangingEvent := nil;
 fOnItemChangeCallback := nil;
 fOnItemChangeEvent := nil;
+fOnListChangingCallback := nil;
+fOnListChangingEvent := nil;
+fOnListChangeCallback := nil;
+fOnListChangeEvent := nil;
 fOnChangingCallback := nil;
 fOnChangingEvent := nil;
 fOnChangeCallback := nil;
@@ -404,6 +398,29 @@ end;
 
 //------------------------------------------------------------------------------
 
+procedure TExplicitStringList.SortItems(Reversed: Boolean = False);
+var
+  Sorter: TListSorter;
+begin
+If fCount > 1 then
+  begin
+    BeginUpdate;
+    try
+      Sorter := TListQuickSorter.Create(SortCompare,Exchange);
+      try
+        Sorter.Reversed := Reversed;
+        Sorter.Sort(LowIndex,HighIndex);
+      finally
+        Sorter.Free;
+      end;
+    finally
+      EndUpdate;
+    end;
+  end;
+end;
+
+//------------------------------------------------------------------------------
+(*
 class procedure TExplicitStringList.WideSwapEndian(Data: PWideChar; Count: TStrSize);
 var
   i:  Integer;
@@ -415,7 +432,7 @@ If Count > 0 then
       Inc(Data);
     end;
 end;
-
+*)
 {-------------------------------------------------------------------------------
     TExplicitStringList - public methods
 -------------------------------------------------------------------------------}
@@ -447,15 +464,15 @@ Function TExplicitStringList.BeginUpdate: Integer;
 var
   i:  Integer;
 begin
-If fUpdateCounter <= 0 then
+If fUpdateCount <= 0 then
   begin
-    fUpdateCounter := 0;
+    fUpdateCount := 0;
     For i := LowIndex to HighIndex do
-      fChangeFlags[i] := False;
-    fChanged := False;
+      SetChanged(i,False);
+    fListChanged := False;
   end;
-Inc(fUpdateCounter);
-Result := fUpdateCounter;
+Inc(fUpdateCount);
+Result := fUpdateCount;
 end;
 
 //------------------------------------------------------------------------------
@@ -464,27 +481,22 @@ Function TExplicitStringList.EndUpdate: Integer;
 var
   i:  Integer;
 begin
-Dec(fUpdateCounter);
-If fUpdateCounter <= 0 then
+Dec(fUpdateCount);
+If fUpdateCount <= 0 then
   begin
-    fUpdateCounter := 0;
+    fUpdateCount := 0;
     For i := LowIndex to HighIndex do
-      If fChangeFlags[i] then
+      If GetChanged(i) then
         begin
           DoItemChange(i);
-          fChangeFlags[i] := False;
+          SetChanged(i,False);
         end;
-    If fChanged then
-      DoChange;
+    If fListChanged then
+      DoListChange(False);
+    fListChanged := False;
+    DoChange;
   end;
-Result := fUpdateCounter;
-end;
-
-//------------------------------------------------------------------------------
-
-Function TExplicitStringList.LowIndex: Integer;
-begin
-Result := Low(fObjects);  // should be always 0
+Result := fUpdateCount;
 end;
 
 //------------------------------------------------------------------------------
@@ -495,37 +507,14 @@ Result := Pred(fCount);
 end;
 
 //------------------------------------------------------------------------------
-
-Function TExplicitStringList.IndexOf(Obj: TObject): Integer;
-var
-  i:  Integer;
-begin
-Result := -1;
-For i := LowIndex to HighIndex do
-  If fObjects[i] = Obj then
-    begin
-      Result := i;
-      Break{For i};
-    end;
-end;
-
-//------------------------------------------------------------------------------
-
-Function TExplicitStringList.Find(Obj: TObject; out Index: Integer): Boolean;
-begin
-Index := IndexOf(Obj);
-Result := CheckIndex(Index);
-end;
-
-//------------------------------------------------------------------------------
-
+(*
 procedure TExplicitStringList.AddStrings(Strings: TStrings);
 begin
 AddStringsDef(Strings);
 end;
-
+*)
 //------------------------------------------------------------------------------
-
+(*
 Function TExplicitStringList.Extract(Obj: TObject): TObject;
 var
   Index:  Integer;
@@ -539,16 +528,16 @@ If CheckIndex(Index) then
   end
 else Result := nil;
 end;
-
+*)
 //------------------------------------------------------------------------------
-
+(*
 Function TExplicitStringList.Remove(Obj: TObject): Integer;
 begin
 Result := IndexOf(Obj);
 If CheckIndex(Result) then
   Delete(Result);
 end;
-
+*)
 //------------------------------------------------------------------------------
 
 procedure TExplicitStringList.Clear;
@@ -561,35 +550,11 @@ If fCount > 0 then
     If fOwnsObjects then
       For i := LowIndex to HighIndex do
         ClearArrayItem(i);
-    SetArraysLength(0);
+    SetArrayLength(0);
     fCount := 0;
-    DoChange;
+    DoListChange;
   end
-else SetArraysLength(0);
-end;
-
-//------------------------------------------------------------------------------
-
-procedure TExplicitStringList.Sort(Reversed: Boolean = False);
-var
-  Sorter: TListSorter;
-begin
-If fCount > 1 then
-  begin
-    BeginUpdate;
-    try
-      Sorter := TListQuickSorter.Create(CompareItems,Exchange);
-      try
-        Sorter.Reversed := Reversed;
-        Sorter.Sort(LowIndex,HighIndex);
-      finally
-        Sorter.Free;
-      end;
-    finally
-      EndUpdate;
-    end;
-  end
-else fSorted := True;
+else SetArrayLength(0);
 end;
 
 end.

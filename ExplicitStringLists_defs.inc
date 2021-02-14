@@ -18,7 +18,7 @@
 {$ENDIF}
 
 // don't touch following
-{$UNDEF ESL_ClassAuxiliary}
+{$UNDEF ESL_ClassTypes}
 {$UNDEF ESL_ClassDeclaration}
 {$UNDEF ESL_ClassImplementation}
 
@@ -31,10 +31,19 @@
 
 {$UNDEF ESL_ShortHelper}
 
+{$UNDEF ESL_DEFAULT_Short}
+{$UNDEF ESL_DEFAULT_Ansi}
+{$UNDEF ESL_DEFAULT_Unicode}
 {$IFOPT H+}
-  // long strings (Ansi/Unicode)
-  {$UNDEF ESL_ShortDefault}
+  // long strings...
+  {$IFDEF Unicode}
+    // ...Unicode
+    {$DEFINE ESL_DEFAULT_Unicode}
+  {$ELSE}
+    // ...Ansi
+    {$DEFINE ESL_DEFAULT_Ansi}
+  {$ENDIF}
 {$ELSE}
   // short strings
-  {$DEFINE ESL_ShortDefault}
+  {$DEFINE ESL_DEFAULT_Short}
 {$ENDIF}
