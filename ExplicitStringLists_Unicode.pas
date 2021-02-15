@@ -15,7 +15,9 @@ type
   TESLStringType = UnicodeString;
 
 type
-  TUnicodeStringList = class;
+  TUnicodeStringList = class; // forward declaration
+
+  TESLClassType = TUnicodeStringList;
 
   TESLUnicodeSortCompareIndex  = Function(List: TUnicodeStringList; Idx1,Idx2: Integer): Integer;
   TESLUnicodeSortCompareString = Function(List: TUnicodeStringList; const Str1,Str2: TESLStringType): Integer;
@@ -33,13 +35,10 @@ type
   {$UNDEF ESL_ClassDeclaration}
   end;
 
-type
-  TESLClassType = TUnicodeStringList;
-
 implementation
 
 uses
-  SysUtils,
+  SysUtils, Classes,
   StrRect;
 
 {$DEFINE ESL_ClassImplementation}

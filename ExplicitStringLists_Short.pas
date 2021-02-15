@@ -15,7 +15,9 @@ type
   TESLStringType = ShortString;
 
 type
-  TShortStringList = class;
+  TShortStringList = class; // forward declaration
+
+  TESLClassType = TShortStringList;
 
   TESLShortSortCompareIndex  = Function(List: TShortStringList; Idx1,Idx2: Integer): Integer;
   TESLShortSortCompareString = Function(List: TShortStringList; const Str1,Str2: TESLStringType): Integer;
@@ -33,13 +35,10 @@ type
   {$UNDEF ESL_ClassDeclaration}
   end;
 
-type
-  TESLClassType = TShortStringList;
-
 implementation
 
 uses
-  SysUtils,
+  SysUtils, Classes,
   StrRect;
 
 {$DEFINE ESL_ClassImplementation}

@@ -15,7 +15,9 @@ type
   TESLStringType = WideString;
 
 type
-  TWideStringList = class;
+  TWideStringList = class;  // forward declaration
+
+  TESLClassType = TWideStringList;
 
   TESLWideSortCompareIndex  = Function(List: TWideStringList; Idx1,Idx2: Integer): Integer;
   TESLWideSortCompareString = Function(List: TWideStringList; const Str1,Str2: TESLStringType): Integer;
@@ -31,15 +33,12 @@ type
   {$DEFINE ESL_ClassDeclaration}
     {$INCLUDE './ExplicitStringLists.inc'}
   {$UNDEF ESL_ClassDeclaration}
-  end;
-
-type
-  TESLClassType = TWideStringList;
+  end; 
 
 implementation
 
 uses
-  SysUtils,
+  SysUtils, Classes,
   StrRect;
 
 {$DEFINE ESL_ClassImplementation}

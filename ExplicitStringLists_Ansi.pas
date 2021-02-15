@@ -15,7 +15,9 @@ type
   TESLStringType = AnsiString;
 
 type
-  TAnsiStringList = class;
+  TAnsiStringList = class;  // forward declaration
+  
+  TESLClassType = TAnsiStringList;
 
   TESLAnsiSortCompareIndex  = Function(List: TAnsiStringList; Idx1,Idx2: Integer): Integer;
   TESLAnsiSortCompareString = Function(List: TAnsiStringList; const Str1,Str2: TESLStringType): Integer;
@@ -33,13 +35,10 @@ type
   {$UNDEF ESL_ClassDeclaration}
   end;
 
-type
-  TESLClassType = TAnsiStringList;
-
 implementation
 
 uses
-  SysUtils,
+  SysUtils, Classes,
   StrRect;
 
 {$DEFINE ESL_ClassImplementation}
@@ -47,6 +46,10 @@ uses
 {$UNDEF ESL_ClassImplementation}
 
 end.
+
+
+
+
 
 
 

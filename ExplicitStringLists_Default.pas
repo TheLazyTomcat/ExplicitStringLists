@@ -15,7 +15,9 @@ type
   TESLStringType = String;
 
 type
-  TDefaultStringList = class;
+  TDefaultStringList = class;  // forward declaration
+
+  TESLClassType = TDefaultStringList;
 
   TESLDefaultSortCompareIndex  = Function(List: TDefaultStringList; Idx1,Idx2: Integer): Integer;
   TESLDefaultSortCompareString = Function(List: TDefaultStringList; const Str1,Str2: TESLStringType): Integer;
@@ -33,13 +35,10 @@ type
   {$UNDEF ESL_ClassDeclaration}
   end;
 
-type
-  TESLClassType = TDefaultStringList;
-
 implementation
 
 uses
-  SysUtils,
+  SysUtils, Classes,
   StrRect;
 
 {$DEFINE ESL_ClassImplementation}

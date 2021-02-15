@@ -15,7 +15,10 @@ type
   EESLException = class(Exception);
 
   EESLIndexOutOfBounds = class(EESLException);
+  EESLUnknownValue     = class(EESLException);
   EESLInvalidValue     = class(EESLException);
+  EESLDuplicitValue    = class(EESLException);
+  EESLSortedList       = class(EESLException);
 
 {===============================================================================
 --------------------------------------------------------------------------------
@@ -41,11 +44,11 @@ type
     // list settings
     fOwnsObjects:             Boolean;
     fCaseSensitive:           Boolean;  // affects sorting and searching
-    //fStrictDelimiter:         Boolean;
-    //fTrailingLineBreak:       Boolean;
-    //fDuplicates:              TDuplicates;
+    fDuplicates:              TDuplicates;
     fSorted:                  Boolean;
     fStrictSorted:            Boolean;
+    fStrictDelimiter:         Boolean;
+    fTrailingLineBreak:       Boolean;
     // change events
     fOnItemChangingCallback:  TIndexCallback;
     fOnItemChangingEvent:     TIndexEvent;
@@ -64,12 +67,12 @@ type
     procedure SetObject(Index: Integer; Value: TObject); virtual; abstract;
     Function GetChanged(Index: Integer): Boolean; virtual; abstract;
     procedure SetChanged(Index: Integer; Value: Boolean); virtual; abstract;
-    Function GetString(Index: Integer): String; virtual; abstract;
-    procedure SetString(Index: Integer; const Value: String); virtual; abstract;
+    Function GetDefString(Index: Integer): String; virtual; abstract;
+    procedure SetDefString(Index: Integer; const Value: String); virtual; abstract;
     Function GetUpdating: Boolean; virtual;
     procedure SetSorted(Value: Boolean); virtual;
-    //Function GetLineBreakStyle: TESLLineBreakStyle; virtual; abstract;
-    //procedure SetLineBreakStyle(Value: TESLLineBreakStyle); virtual; abstract;
+    Function GetLineBreakStyle: TESLLineBreakStyle; virtual; abstract;
+    procedure SetLineBreakStyle(Value: TESLLineBreakStyle); virtual; abstract;
     // inherited list methods
     procedure SetCapacity(Value: Integer); override;
     Function GetCount: Integer; override;
@@ -88,6 +91,7 @@ type
     procedure Initialize; virtual;
     procedure Finalize; virtual;
     // auxiliary methods
+    Function InternalExtract(Index: Integer): TObject; virtual; abstract;
     Function SortCompare(Idx1,Idx2: Integer): Integer; virtual; abstract;    
     procedure SortItems(Reversed: Boolean = False); virtual;
     //Function GetWriteSize: TMemSize; virtual; abstract;                 // for preallocations
@@ -102,23 +106,28 @@ type
     // list index methods
     Function HighIndex: Integer; override;
     // list items methods
+    Function IndexOfDefString(const Str: String): Integer; virtual; abstract;
     Function IndexOfObject(Obj: TObject): Integer; virtual; abstract;
-    Function IndexOfString(const Str: String): Integer; virtual; abstract;
+    Function FindDefString(const Str: String; out Index: Integer): Boolean; virtual; abstract;
     Function FindObject(Obj: TObject; out Index: Integer): Boolean; virtual; abstract;
-    Function FindString(const Str: String; out Index: Integer): Boolean; virtual; abstract;
-    Function AddString(const Str: String): Integer; virtual; abstract;
-    Function AddStringObject(const Str: String; Obj: TObject): Integer; virtual; abstract;
-
-    //procedure AddStrings(Strings: TStrings); overload; virtual;
-    //procedure AddStringsDef(Strings: TStrings); overload; virtual; abstract;
-    //procedure AddStringsDef(Strings: array of String); overload; virtual; abstract;
-    //procedure Insert(Index: Integer; const Str: String); overload; virtual; abstract;
-    //procedure InsertObject(Index: Integer; const Str: String); overload; virtual; abstract;
-    //procedure Move(Src,Dst: Integer); virtual; abstract;
+    Function AddDefString(const Str: String): Integer; virtual; abstract;
+    Function AddDefStringObject(const Str: String; Obj: TObject): Integer; virtual; abstract;
+    procedure AddStrings(Strings: TStrings); overload; virtual;
+    procedure AddStringsDef(Strings: TStrings); overload; virtual;
+    procedure AddStringsDef(Strings: array of String); overload; virtual;
+    procedure AppendDefString(const Str: String); virtual; abstract;
+    procedure AppendDefStringObject(const Str: String; Obj: TObject); virtual; abstract;
+    procedure AppendStrings(Strings: TStrings); overload; virtual;
+    procedure AppendStringsDef(Strings: TStrings); overload; virtual;
+    procedure AppendStringsDef(Strings: array of String); overload; virtual;
+    procedure InsertDefString(Index: Integer; const Str: String); virtual; abstract;
+    procedure InsertDefStringObject(Index: Integer; const Str: String; Obj: TObject); virtual; abstract;
+    procedure Move(SrcIdx,DstIdx: Integer); virtual; abstract;
     procedure Exchange(Idx1,Idx2: Integer); virtual; abstract;
-
-    //Function Extract(Obj: TObject): TObject; overload; virtual;
-    //Function Remove(Obj: TObject): Integer; overload; virtual;
+    Function ExtractDefString(const Str: String): TObject; virtual; abstract;
+    Function ExtractObject(Obj: TObject): TObject; virtual; abstract;
+    Function RemoveDefString(const Str: String): Integer; virtual; abstract;
+    Function RemoveObject(Obj: TObject): Integer; virtual; abstract;
     procedure Delete(Index: Integer); virtual; abstract;
     procedure Clear; virtual;
     // list manipulation methods
@@ -141,19 +150,19 @@ type
     //procedure SaveToFile(const FileName: String; WriteBOM: Boolean = True; Endianness: TStringEndianness = seSystem); virtual;
     // list data properties
     property Objects[Index: Integer]: TObject read GetObject write SetObject;
-    property Strings[Index: Integer]: String read GetString write SetString;
+    property DefStrings[Index: Integer]: String read GetDefString write SetDefString;
     // updating properties
     property Updating: Boolean read GetUpdating;
     property UpdateCount: Integer read fUpdateCount;
     // settings properties
     property OwnsObjects: Boolean read fOwnsObjects write fOwnsObjects;
     property CaseSensitive: Boolean read fCaseSensitive write fCaseSensitive;
-    //property StrictDelimiter: Boolean read fStrictDelimiter write fStrictDelimiter;
-    //property TrailingLineBreak: Boolean read fTrailingLineBreak write fTrailingLineBreak;
-    //property Duplicates: TDuplicates read fDuplicates write fDuplicates;
+    property Duplicates: TDuplicates read fDuplicates write fDuplicates;
     property Sorted: Boolean read fSorted write SetSorted;
     property StrictSorted: Boolean read fStrictSorted write fStrictSorted;
-    //property LineBreakStyle: TESLLineBreakStyle read GetLineBreakStyle write SetLineBreakStyle;
+    property StrictDelimiter: Boolean read fStrictDelimiter write fStrictDelimiter;
+    property TrailingLineBreak: Boolean read fTrailingLineBreak write fTrailingLineBreak;
+    property LineBreakStyle: TESLLineBreakStyle read GetLineBreakStyle write SetLineBreakStyle;
     // change events properties
     property OnItemChangingCallback: TIndexCallback read fOnItemChangingCallback write fOnItemChangingCallback;
     property OnItemChangingEvent: TIndexEvent read fOnItemChangingEvent write fOnItemChangingEvent;
@@ -507,12 +516,75 @@ Result := Pred(fCount);
 end;
 
 //------------------------------------------------------------------------------
-(*
+
 procedure TExplicitStringList.AddStrings(Strings: TStrings);
 begin
 AddStringsDef(Strings);
 end;
-*)
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.AddStringsDef(Strings: TStrings);
+var
+  i:  Integer;
+begin
+BeginUpdate;
+try
+  Grow(Strings.Count);
+  For i := 0 to Pred(Strings.Count) do
+    AddDefStringObject(Strings[i],Strings.Objects[i]);
+finally
+  EndUpdate;
+end;
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+procedure TExplicitStringList.AddStringsDef(Strings: array of String);
+var
+  i:  Integer;
+begin
+BeginUpdate;
+try
+  Grow(Length(Strings));
+  For i := Low(Strings) to High(Strings) do
+    AddDefString(Strings[i]);
+finally
+  EndUpdate;
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.AppendStrings(Strings: TStrings);
+begin
+AppendStringsDef(Strings);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.AppendStringsDef(Strings: TStrings);
+begin
+If not fSorted or not fStrictSorted then
+  begin
+    fSorted := False;
+    AddStringsDef(Strings);
+  end
+else raise EESLSortedList.CreateFmt('%s.AppendStringsDef: Cannot append to sorted list.',[Self.ClassName]);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.AppendStringsDef(Strings: array of String);
+begin
+If not fSorted or not fStrictSorted then
+  begin
+    fSorted := False;
+    AddStringsDef(Strings);
+  end
+else raise EESLSortedList.CreateFmt('%s.AppendStringsDef: Cannot append to sorted list.',[Self.ClassName]);
+end;
+
 //------------------------------------------------------------------------------
 (*
 Function TExplicitStringList.Extract(Obj: TObject): TObject;
