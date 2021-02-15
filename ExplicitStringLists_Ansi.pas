@@ -5,6 +5,7 @@ unit ExplicitStringLists_Ansi;
 interface
 
 uses
+  Classes,
   AuxTypes,
   ExplicitStringLists_Base;
 
@@ -13,6 +14,8 @@ uses
 type
   TESLCharType   = AnsiChar;
   TESLStringType = AnsiString;
+
+  TESLPCharType = ^TESLCharType;
 
 type
   TAnsiStringList = class;  // forward declaration
@@ -38,7 +41,7 @@ type
 implementation
 
 uses
-  SysUtils, Classes,
+  SysUtils, 
   StrRect;
 
 {$DEFINE ESL_ClassImplementation}
@@ -46,6 +49,8 @@ uses
 {$UNDEF ESL_ClassImplementation}
 
 end.
+
+
 
 
 

@@ -5,6 +5,7 @@ unit ExplicitStringLists_UTF8;
 interface
 
 uses
+  Classes,
   AuxTypes,
   ExplicitStringLists_Base;
 
@@ -13,6 +14,8 @@ uses
 type
   TESLCharType   = UTF8Char;
   TESLStringType = UTF8String;
+
+  TESLPCharType = ^TESLCharType;
   
 type
   TUTF8StringList = class;  // forward declaration
@@ -38,7 +41,7 @@ type
 implementation
 
 uses
-  SysUtils, Classes,
+  SysUtils, 
   StrRect;
 
 {$DEFINE ESL_ClassImplementation}

@@ -94,7 +94,10 @@ type
     Function InternalExtract(Index: Integer): TObject; virtual; abstract;
     Function SortCompare(Idx1,Idx2: Integer): Integer; virtual; abstract;    
     procedure SortItems(Reversed: Boolean = False); virtual;
-    //Function GetWriteSize: TMemSize; virtual; abstract;                 // for preallocations
+    Function GetWriteSize: TMemSize; virtual; abstract; // for preallocations
+    procedure WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TESLStringEndianness); virtual; abstract;
+    procedure WriteLineBreakToStream(Stream: TStream; Endianness: TESLStringEndianness); virtual; abstract;
+    procedure WriteBOMToStream(Stream: TStream; Endianness: TESLStringEndianness); virtual; abstract;
     //class procedure WideSwapEndian(Data: PWideChar; Count: TStrSize); virtual;
   public
     class Function GetSystemEndianness: TESLStringEndianness; virtual;    // can only return seLittle or seBig, never seSystem
@@ -113,13 +116,13 @@ type
     Function AddDefString(const Str: String): Integer; virtual; abstract;
     Function AddDefStringObject(const Str: String; Obj: TObject): Integer; virtual; abstract;
     procedure AddStrings(Strings: TStrings); overload; virtual;
-    procedure AddStringsDef(Strings: TStrings); overload; virtual;
-    procedure AddStringsDef(Strings: array of String); overload; virtual;
+    procedure AddDefStrings(Strings: TStrings); overload; virtual;
+    procedure AddDefStrings(Strings: array of String); overload; virtual;
     procedure AppendDefString(const Str: String); virtual; abstract;
     procedure AppendDefStringObject(const Str: String; Obj: TObject); virtual; abstract;
     procedure AppendStrings(Strings: TStrings); overload; virtual;
-    procedure AppendStringsDef(Strings: TStrings); overload; virtual;
-    procedure AppendStringsDef(Strings: array of String); overload; virtual;
+    procedure AppendDefStrings(Strings: TStrings); overload; virtual;
+    procedure AppendDefStrings(Strings: array of String); overload; virtual;
     procedure InsertDefString(Index: Integer; const Str: String); virtual; abstract;
     procedure InsertDefStringObject(Index: Integer; const Str: String; Obj: TObject); virtual; abstract;
     procedure Move(SrcIdx,DstIdx: Integer); virtual; abstract;
@@ -132,10 +135,13 @@ type
     procedure Clear; virtual;
     // list manipulation methods
     procedure Sort(Reversed: Boolean = False); virtual; abstract;
-    // procedure Assign(Source: TExplicitStringList); overload; virtual;
-    // procedure Assign(Source: TStrings); overload; virtual;
-    // procedure AssignTo(Destination: TExplicitStringList); overload; virtual;
-    // procedure AssignTo(Destination: TStrings); overload; virtual;
+    procedure Reverse; virtual;
+    // list assignment
+    procedure SetStrings(Strings: TStrings); overload; virtual;
+    procedure SetDefStrings(Strings: TStrings); overload; virtual; abstract;
+    procedure SetDefStrings(Strings: array of String); overload; virtual; abstract;
+    procedure Assign(Source: TStrings); overload; virtual; abstract;
+    procedure AssignTo(Destination: TStrings); overload; virtual; abstract;
     // streaming methods
     //procedure LoadFromStream(Stream: TStream; out Endianness: TStringEndianness); overload; virtual; abstract;
     //procedure LoadFromStream(Stream: TStream); overload; virtual;
@@ -146,8 +152,8 @@ type
     Endiannes affects only Wide- and UnicodeStrings, it has no meaning for
     single-byte-character strings.
   }
-    //procedure SaveToStream(Stream: TStream; WriteBOM: Boolean = True; Endianness: TStringEndianness = seSystem); virtual;
-    //procedure SaveToFile(const FileName: String; WriteBOM: Boolean = True; Endianness: TStringEndianness = seSystem); virtual;
+    procedure SaveToStream(Stream: TStream; WriteBOM: Boolean = True; Endianness: TESLStringEndianness = seSystem); virtual;
+    procedure SaveToFile(const FileName: String; WriteBOM: Boolean = True; Endianness: TESLStringEndianness = seSystem); virtual;
     // list data properties
     property Objects[Index: Integer]: TObject read GetObject write SetObject;
     property DefStrings[Index: Integer]: String read GetDefString write SetDefString;
@@ -187,7 +193,7 @@ type
 implementation
 
 uses
-  ListSorters;
+  StrRect, ListSorters;
 
 {===============================================================================
 --------------------------------------------------------------------------------
@@ -378,11 +384,11 @@ fUpdateCount := 0;
 fListChanged := False;
 fOwnsObjects := False;
 fCaseSensitive := False;
-//fStrictDelimiter := False;
-//fTrailingLineBreak := True;
-//fDuplicates := dupAccept;
+fDuplicates := dupAccept;
 fSorted := False;
 fStrictSorted := True;
+fStrictDelimiter := False;
+fTrailingLineBreak := True;
 end;
 
 //------------------------------------------------------------------------------
@@ -415,6 +421,7 @@ If fCount > 1 then
   begin
     BeginUpdate;
     try
+      DoListChanging;
       Sorter := TListQuickSorter.Create(SortCompare,Exchange);
       try
         Sorter.Reversed := Reversed;
@@ -422,6 +429,7 @@ If fCount > 1 then
       finally
         Sorter.Free;
       end;
+      DoListChange;
     finally
       EndUpdate;
     end;
@@ -519,12 +527,12 @@ end;
 
 procedure TExplicitStringList.AddStrings(Strings: TStrings);
 begin
-AddStringsDef(Strings);
+AddDefStrings(Strings);
 end;
 
 //------------------------------------------------------------------------------
 
-procedure TExplicitStringList.AddStringsDef(Strings: TStrings);
+procedure TExplicitStringList.AddDefStrings(Strings: TStrings);
 var
   i:  Integer;
 begin
@@ -540,7 +548,7 @@ end;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-procedure TExplicitStringList.AddStringsDef(Strings: array of String);
+procedure TExplicitStringList.AddDefStrings(Strings: array of String);
 var
   i:  Integer;
 begin
@@ -558,58 +566,33 @@ end;
 
 procedure TExplicitStringList.AppendStrings(Strings: TStrings);
 begin
-AppendStringsDef(Strings);
+AppendDefStrings(Strings);
 end;
 
 //------------------------------------------------------------------------------
 
-procedure TExplicitStringList.AppendStringsDef(Strings: TStrings);
+procedure TExplicitStringList.AppendDefStrings(Strings: TStrings);
 begin
 If not fSorted or not fStrictSorted then
   begin
     fSorted := False;
-    AddStringsDef(Strings);
+    AddDefStrings(Strings);
   end
-else raise EESLSortedList.CreateFmt('%s.AppendStringsDef: Cannot append to sorted list.',[Self.ClassName]);
+else raise EESLSortedList.CreateFmt('%s.AppendDefStrings: Cannot append to sorted list.',[Self.ClassName]);
 end;
 
 //------------------------------------------------------------------------------
 
-procedure TExplicitStringList.AppendStringsDef(Strings: array of String);
+procedure TExplicitStringList.AppendDefStrings(Strings: array of String);
 begin
 If not fSorted or not fStrictSorted then
   begin
     fSorted := False;
-    AddStringsDef(Strings);
+    AddDefStrings(Strings);
   end
-else raise EESLSortedList.CreateFmt('%s.AppendStringsDef: Cannot append to sorted list.',[Self.ClassName]);
+else raise EESLSortedList.CreateFmt('%s.AppendDefStrings: Cannot append to sorted list.',[Self.ClassName]);
 end;
 
-//------------------------------------------------------------------------------
-(*
-Function TExplicitStringList.Extract(Obj: TObject): TObject;
-var
-  Index:  Integer;
-begin
-Index := IndexOf(Obj);
-If CheckIndex(Index) then
-  begin
-    Result := fObjects[Index];
-    fObjects[Index] := nil;
-    Delete(Index);
-  end
-else Result := nil;
-end;
-*)
-//------------------------------------------------------------------------------
-(*
-Function TExplicitStringList.Remove(Obj: TObject): Integer;
-begin
-Result := IndexOf(Obj);
-If CheckIndex(Result) then
-  Delete(Result);
-end;
-*)
 //------------------------------------------------------------------------------
 
 procedure TExplicitStringList.Clear;
@@ -618,7 +601,7 @@ var
 begin
 If fCount > 0 then
   begin
-    DoChanging;
+    DoListChanging;
     If fOwnsObjects then
       For i := LowIndex to HighIndex do
         ClearArrayItem(i);
@@ -627,6 +610,82 @@ If fCount > 0 then
     DoListChange;
   end
 else SetArrayLength(0);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.Reverse;
+var
+  i:  Integer;
+begin
+If not fSorted or not fStrictSorted then
+  begin
+    fSorted := False;
+    If fCount > 1 then
+      begin
+        BeginUpdate;
+        try
+          DoListChanging;
+          For i := LowIndex to Pred(fCount shr 1) do
+            Exchange(i,HighIndex - i);
+          DoListChange;            
+        finally
+          EndUpdate;
+        end;
+      end;
+  end
+else raise EESLSortedList.CreateFmt('%s.Reverse: Cannot reverse sorted list.',[Self.ClassName]);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.SetStrings(Strings: TStrings);
+begin
+SetDefStrings(Strings);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.SaveToStream(Stream: TStream; WriteBOM: Boolean = True; Endianness: TESLStringEndianness = seSystem);
+var
+  WriteSize:    UInt64;
+  PositionTemp: Int64;
+  i:            Integer;
+begin
+If WriteBOM then
+  WriteBOMToStream(Stream,Endianness);
+WriteSize := GetWriteSize;
+// preallocate space
+If Stream.Size < (Stream.Position + WriteSize) then
+  begin
+    PositionTemp := Stream.Position;
+    try
+      Stream.Size := Stream.Position + WriteSize;
+    finally
+      Stream.Position := PositionTemp;
+    end;
+  end;
+// write data
+For i := LowIndex to HighIndex do
+  begin
+    WriteItemToStream(Stream,i,Endianness);
+    If (i < HighIndex) or fTrailingLineBreak then
+      WriteLineBreakToStream(Stream,Endianness);
+  end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.SaveToFile(const FileName: String; WriteBOM: Boolean = True; Endianness: TESLStringEndianness = seSystem);
+var
+  FileStream: TFileStream;
+begin
+FileStream := TFileStream.Create(StrToRTL(FileName),fmCreate or fmShareDenyWrite);
+try
+  SaveToStream(FileStream,WriteBOM,Endianness);
+finally
+  FileStream.Free;
+end;
 end;
 
 end.

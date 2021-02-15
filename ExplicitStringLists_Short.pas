@@ -5,6 +5,7 @@ unit ExplicitStringLists_Short;
 interface
 
 uses
+  Classes,
   AuxTypes,
   ExplicitStringLists_Base;
 
@@ -13,6 +14,8 @@ uses
 type
   TESLCharType   = AnsiChar;
   TESLStringType = ShortString;
+
+  TESLPCharType = ^TESLCharType;
 
 type
   TShortStringList = class; // forward declaration
@@ -38,7 +41,7 @@ type
 implementation
 
 uses
-  SysUtils, Classes,
+  SysUtils, 
   StrRect;
 
 {$DEFINE ESL_ClassImplementation}

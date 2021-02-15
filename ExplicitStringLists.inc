@@ -51,14 +51,19 @@
     Function InternalExtract(Index: Integer): TObject; override;
     Function CompareStrings(const Str1, Str2: TESLStringType): Integer; overload; virtual;
     Function SortCompare(Idx1,Idx2: Integer): Integer; override;
-    //Function GetWriteSize: TMemSize; override;
+    Function GetWriteSize: TMemSize; override;
+    procedure WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TESLStringEndianness); override;
+    procedure WriteLineBreakToStream(Stream: TStream; Endianness: TESLStringEndianness); override;
+    procedure WriteBOMToStream(Stream: TStream; Endianness: TESLStringEndianness); override;
   public
     // utility methods
     class Function ConvertFromString(const Str: String): TESLStringType; virtual;
     class Function ConvertToString(const Str: TESLStringType): String; virtual;
     class Function CompareStrings(const Str1, Str2: TESLStringType; CaseSensitive: Boolean): Integer; overload; virtual;
     // list index methods
-    Function LowIndex: Integer; override;      
+    Function LowIndex: Integer; override;
+    Function First: TESLStringType; virtual;
+    Function Last: TESLStringType; virtual;
     // list items methods
     Function IndexOf(const Str: TESLStringType): Integer; virtual;
     Function IndexOfDefString(const Str: String): Integer; override;
@@ -109,6 +114,16 @@
     procedure Sort(Reversed: Boolean = False); override;
     procedure CustomSort(CompareFunc: TESLSortCompareIndexType; Reversed: Boolean = False); overload; virtual;
     procedure CustomSort(CompareFunc: TESLSortCompareStringType; Reversed: Boolean = False); overload; virtual;
+    Function Equals(Strings: TESLClassType): Boolean; reintroduce; virtual;
+    // list assignment methods
+    procedure SetStrings(Strings: TESLClassType); overload; virtual;
+    procedure SetStrings(Strings: array of TESLStringType); overload; virtual;
+    procedure SetDefStrings(Strings: TStrings); override;
+    procedure SetDefStrings(Strings: array of String); override;
+    procedure Assign(Source: TESLClassType); overload; virtual;
+    procedure Assign(Source: TStrings); override;
+    procedure AssignTo(Destination: TESLClassType); overload; virtual;
+    procedure AssignTo(Destination: TStrings); override;
     // list data properties
     property Items[Index: Integer]: TESLListItem read GetItem;
     property Strings[Index: Integer]: TESLStringType read GetString write SetString; default;
@@ -129,6 +144,38 @@ const
   ESL_DEFVAL_Delimiter          = TESLCharType(',');
   ESL_DEFVAL_LineBreak          = TESLStringType(sLineBreak);
   ESL_DEFVAL_QuoteChar          = TESLCharType('"');
+
+type
+  TStringsFeaturesChecker = class(Classes.TStrings)
+  protected
+    procedure FeatureChecks; virtual;
+  end;
+  
+type
+  TStringListFeaturesChecker = class(Classes.TStringList)
+  protected
+    procedure FeatureChecks; virtual;
+  end;
+
+procedure TStringsFeaturesChecker.FeatureChecks;
+begin
+{$IF Declared(LineBreak)}         {$DEFINE ESL_STRINGS_LineBreak}         {$IFEND}
+{$IF Declared(TrailingLineBreak)} {$DEFINE ESL_STRINGS_TrailingLineBreak} {$IFEND}
+{$IF Declared(NameValueSeparator)}{$DEFINE ESL_STRINGS_NameValueSeparator}{$IFEND}
+{$IF Declared(Delimiter)}         {$DEFINE ESL_STRINGS_Delimiter}         {$IFEND}
+{$IF Declared(StrictDelimiter)}   {$DEFINE ESL_STRINGS_StrictDelimiter}   {$IFEND}
+{$IF Declared(QuoteChar)}         {$DEFINE ESL_STRINGS_QuoteChar}         {$IFEND}
+raise Exception.Create('This method is not supposed to be called.');
+end;
+
+procedure TStringListFeaturesChecker.FeatureChecks;
+begin
+{$IF Declared(OwnsObjects)}  {$DEFINE ESL_STRINGLIST_OwnsObjects}  {$IFEND}
+{$IF Declared(CaseSensitive)}{$DEFINE ESL_STRINGLIST_CaseSensitive}{$IFEND}
+{$IF Declared(Duplicates)}   {$DEFINE ESL_STRINGLIST_Duplicates}   {$IFEND}
+{$IF Declared(Sorted)}       {$DEFINE ESL_STRINGLIST_Sorted}       {$IFEND}
+raise Exception.Create('This method is not supposed to be called.');
+end;
 
 {-------------------------------------------------------------------------------
     TESLClassType - protected methods
@@ -205,12 +252,9 @@ end;
 procedure TESLClassType.SetChanged(Index: Integer; Value: Boolean);
 begin
 If CheckIndex(Index) then
-  begin
-    DoItemChanging(Index);
-    fItems[Index].Changed := Value;
-    DoItemChange(Index);
-  end
-else raise EESLIndexOutOfBounds.CreateFmt('%s.SetChanged: Index (%d) out of bounds.',[Self.ClassName,Index]);
+  fItems[Index].Changed := Value
+else
+  raise EESLIndexOutOfBounds.CreateFmt('%s.SetChanged: Index (%d) out of bounds.',[Self.ClassName,Index]);
 end;
 
 //------------------------------------------------------------------------------
@@ -253,7 +297,7 @@ begin
 If CheckIndex(Index) then
   begin
     DoItemChanging(Index);
-    fItems[Index].Str := Value + fNameValueSeparator + ExtractValueStr(fItems[Index].Str);
+    fItems[Index].Str := Value + TESLStringType(fNameValueSeparator) + ExtractValueStr(fItems[Index].Str);
     DoItemChange(Index);
   end
 else raise EESLIndexOutOfBounds.CreateFmt('%s.SetName: Index (%d) out of bounds.',[Self.ClassName,Index]);
@@ -280,7 +324,7 @@ begin
 If FindName(Name,Index) then
   begin
     DoItemChanging(Index);
-    fItems[Index].Str := ExtractNameStr(fItems[Index].Str) + fNameValueSeparator + Value;
+    fItems[Index].Str := ExtractNameStr(fItems[Index].Str) + TESLStringType(fNameValueSeparator) + Value;
     DoItemChange(Index);
   end
 else raise EESLUnknownValue.CreateFmt('%s.SetValue: Name "%s" not found.',[Self.ClassName,ConvertToString(Name)]);
@@ -303,7 +347,7 @@ begin
 If CheckIndex(Index) then
   begin
     DoItemChanging(Index);
-    fItems[Index].Str := ExtractNameStr(fItems[Index].Str) + fNameValueSeparator + Value;
+    fItems[Index].Str := ExtractNameStr(fItems[Index].Str) + TESLStringType(fNameValueSeparator) + Value;
     DoItemChange(Index);
   end
 else raise EESLIndexOutOfBounds.CreateFmt('%s.SetValueFromIndex: Index (%d) out of bounds.',[Self.ClassName,Index]);
@@ -511,12 +555,41 @@ else
 end;
 
 //------------------------------------------------------------------------------
-(*
+
 Function TESLClassType.GetWriteSize: TMemSize;
+var
+  i:  Integer;
 begin
-{$MESSAGE 'implement'}
+Result := 0;
+For i := LowIndex to HighIndex do
+  begin
+    Inc(Result,Length(fItems[i].Str));
+    If (i < HighIndex) or fTrailingLineBreak then
+      Inc(Result,Length(fLineBreak));
+  end;
 end;
-*)
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TESLStringEndianness);
+begin
+{$message 'implement'}
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.WriteLineBreakToStream(Stream: TStream; Endianness: TESLStringEndianness);
+begin
+{$message 'implement'}
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.WriteBOMToStream(Stream: TStream; Endianness: TESLStringEndianness);
+begin
+{$message 'implement'}
+end;
+
 {-------------------------------------------------------------------------------
     TESLClassType - public methods
 -------------------------------------------------------------------------------}
@@ -587,6 +660,20 @@ end;
 Function TESLClassType.LowIndex: Integer;
 begin
 Result := Low(fItems);  // should be always 0
+end;
+
+//------------------------------------------------------------------------------
+
+Function TESLClassType.First: TESLStringType;
+begin
+Result := GetString(LowIndex);
+end;
+
+//------------------------------------------------------------------------------
+
+Function TESLClassType.Last: TESLStringType;
+begin
+Result := GetString(HighIndex);
 end;
 
 //------------------------------------------------------------------------------
@@ -780,7 +867,7 @@ end;
 
 Function TESLClassType.AddNameValuePairObject(const Name,Value: TESLStringType; Obj: TObject): Integer;
 begin
-Result := AddObject(Name + fNameValueSeparator + Value,Obj);
+Result := AddObject(Name + TESLStringType(fNameValueSeparator) + Value,Obj);
 end;
 
 //------------------------------------------------------------------------------
@@ -859,7 +946,7 @@ end;
 
 procedure TESLClassType.AppendNameValuePairObject(const Name,Value: TESLStringType; Obj: TObject);
 begin
-AppendObject(Name + fNameValueSeparator + Value,Obj);
+AppendObject(Name + TESLStringType(fNameValueSeparator) + Value,Obj);
 end;
 
 //------------------------------------------------------------------------------
@@ -952,7 +1039,7 @@ end;
 
 procedure TESLClassType.InsertNameValuePairObject(Index: Integer; const Name,Value: TESLStringType; Obj: TObject);
 begin
-InsertObject(Index,Name + fNameValueSeparator + Value,Obj);
+InsertObject(Index,Name +  TESLStringType(fNameValueSeparator) + Value,Obj);
 end;
 
 //------------------------------------------------------------------------------
@@ -1110,27 +1197,282 @@ end;
 
 procedure TESLClassType.Sort(Reversed: Boolean = False);
 begin
-fCompareFuncIndex := nil;
-fCompareFuncString := nil;
-SortItems(Reversed);
+If not fSorted or not fStrictSorted then
+  begin
+    fSorted := False;
+    fCompareFuncIndex := nil;
+    fCompareFuncString := nil;
+    SortItems(Reversed);
+  end
+else raise EESLSortedList.CreateFmt('%s.Sort: Cannot sort sorted list.',[Self.ClassName]);
 end;
 
 //------------------------------------------------------------------------------
 
 procedure TESLClassType.CustomSort(CompareFunc: TESLSortCompareIndexType; Reversed: Boolean = False);
 begin
-fCompareFuncIndex := CompareFunc;
-fCompareFuncString := nil;
-SortItems(Reversed);
+If not fSorted or not fStrictSorted then
+  begin
+    fSorted := False;
+    fCompareFuncIndex := CompareFunc;
+    fCompareFuncString := nil;
+    SortItems(Reversed);
+  end
+else raise EESLSortedList.CreateFmt('%s.CustomSort: Cannot sort sorted list.',[Self.ClassName]);
 end;
 
 //------------------------------------------------------------------------------
 
 procedure TESLClassType.CustomSort(CompareFunc: TESLSortCompareStringType; Reversed: Boolean = False);
 begin
-fCompareFuncIndex := nil;
-fCompareFuncString := CompareFunc;
-SortItems(Reversed);
+If not fSorted or not fStrictSorted then
+  begin
+    fSorted := False;
+    fCompareFuncIndex := nil;
+    fCompareFuncString := CompareFunc;
+    SortItems(Reversed);
+  end
+else raise EESLSortedList.CreateFmt('%s.CustomSort: Cannot sort sorted list.',[Self.ClassName]);
+end;
+
+//------------------------------------------------------------------------------
+
+Function TESLClassType.Equals(Strings: TESLClassType): Boolean;
+var
+  i:  Integer;
+begin
+If fCount = Strings.Count then
+  begin
+    Result := True;
+    For i := Strings.LowIndex to Strings.HighIndex do
+      If CompareStrings(fItems[i].Str,Strings[i]) <> 0 then
+        begin
+          Result := False;
+          Break{For i};
+        end;
+  end
+else Result := False;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.SetStrings(Strings: TESLClassType);
+var
+  i:  Integer;
+begin
+BeginUpdate;
+try
+  DoListChanging;
+  Clear;
+  SetCount(Strings.Count);
+  For i := Strings.LowIndex to Strings.HighIndex do
+    begin
+      fItems[i].Str := Strings[i];
+      fItems[i].Obj := Strings.Objects[i];
+    end;
+  If fSorted then
+    Sort;
+  DoListChange;
+finally
+  EndUpdate;
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.SetStrings(Strings: array of TESLStringType);
+var
+  i:  Integer;
+begin
+BeginUpdate;
+try
+  DoListChanging;
+  Clear;
+  SetCount(Length(Strings));
+  For i := Low(Strings) to High(Strings) do
+    fItems[i].Str := Strings[i];
+  If fSorted then
+    Sort;
+  DoListChange;
+finally
+  EndUpdate;
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.SetDefStrings(Strings: TStrings);
+var
+  i:  Integer;
+begin
+BeginUpdate;
+try
+  DoListChanging;
+  Clear;
+  SetCount(Strings.Count);
+  For i := 0 to Pred(Strings.Count) do
+    begin
+      fItems[i].Str := {$IFNDEF ESL_Default}ConvertFromString{$ENDIF}(Strings[i]);
+      fItems[i].Obj := Strings.Objects[i];
+    end;
+  If fSorted then
+    Sort;
+  DoListChange;
+finally
+  EndUpdate;
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.SetDefStrings(Strings: array of String);
+var
+  i:  Integer;
+begin
+BeginUpdate;
+try
+  DoListChanging;
+  Clear;
+  SetCount(Length(Strings));
+  For i := Low(Strings) to High(Strings) do
+    fItems[i].Str := {$IFNDEF ESL_Default}ConvertFromString{$ENDIF}(Strings[i]);
+  If fSorted then
+    Sort;
+  DoListChange;
+finally
+  EndUpdate;
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.Assign(Source: TESLClassType);
+var
+  i:  Integer;
+begin
+BeginUpdate;
+try
+  DoListChanging;
+  Clear;
+  // copy properties
+  fOwnsObjects := Source.OwnsObjects;
+  fCaseSensitive := Source.CaseSensitive;
+  fDuplicates := Source.Duplicates;
+  fSorted := Source.Sorted;
+  fStrictSorted := Source.StrictSorted;
+  fStrictDelimiter := Source.StrictDelimiter;
+  fTrailingLineBreak := Source.TrailingLineBreak;
+  fNameValueSeparator := Source.NameValueSeparator;
+  fLineBreak := Source.LineBreak;
+  fDelimiter := Source.Delimiter;
+  fQuoteChar := Source.QuoteChar;
+  // copy data
+  SetCount(Source.Count);
+  For i := Source.LowIndex to Source.HighIndex do
+    begin
+      fItems[i].Str := Source[i];
+      fItems[i].Obj := Source.Objects[i];
+    end;
+  DoListChange;
+finally
+  EndUpdate;
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.Assign(Source: TStrings);
+var
+  i:  Integer;
+begin
+BeginUpdate;
+try
+  DoListChanging;
+  Clear;
+  // copy properties
+  If Source is TStringList then
+    begin
+    {$IFDEF ESL_STRINGLIST_OwnsObjects}
+      fOwnsObjects := TStringList(Source).OwnsObjects;{$ENDIF}
+    {$IFDEF ESL_STRINGLIST_CaseSensitive}
+      fCaseSensitive := TStringList(Source).CaseSensitive;{$ENDIF}
+    {$IFDEF ESL_STRINGLIST_Duplicates}
+      fDuplicates := TStringList(Source).Duplicates;{$ENDIF}
+    {$IFDEF ESL_STRINGLIST_Sorted}
+      fSorted := TStringList(Source).Sorted;{$ENDIF}
+    end;
+{$IFDEF ESL_STRINGS_LineBreak}
+  fLineBreak := {$IFNDEF ESL_Default}ConvertFromString{$ENDIF}(Source.LineBreak);{$ENDIF}
+{$IFDEF ESL_STRINGS_TrailingLineBreak}
+  fTrailingLineBreak := Source.TrailingLineBreak;{$ENDIF}
+{$IFDEF ESL_STRINGS_NameValueSeparator}
+  fNameValueSeparator := TESLCharType(Source.NameValueSeparator);{$ENDIF}
+{$IFDEF ESL_STRINGS_Delimiter}
+  fDelimiter := TESLCharType(Source.Delimiter);{$ENDIF}
+{$IFDEF ESL_STRINGS_StrictDelimiter}
+  fStrictDelimiter := Source.StrictDelimiter;{$ENDIF}
+{$IFDEF ESL_STRINGS_QuoteChar}
+  fQuoteChar := TESLCharType(Source.QuoteChar);{$ENDIF}
+  // copy data
+  SetCount(Source.Count);
+  For i := 0 to Pred(Source.Count) do
+    begin
+      fItems[i].Str := {$IFNDEF ESL_Default}ConvertFromString{$ENDIF}(Source[i]);
+      fItems[i].Obj := Source.Objects[i];
+    end;
+  DoListChange;
+finally
+  EndUpdate;
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.AssignTo(Destination: TESLClassType);
+begin
+Destination.Assign(Self);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.AssignTo(Destination: TStrings);
+var
+  i:  Integer;
+begin
+Destination.BeginUpdate;
+try
+  Destination.Clear;
+  // copy properties
+  If Destination is TStringList then
+    begin
+    {$IFDEF ESL_STRINGLIST_OwnsObjects}
+      TStringList(Destination).OwnsObjects := fOwnsObjects;{$ENDIF}
+    {$IFDEF ESL_STRINGLIST_CaseSensitive}
+      TStringList(Destination).CaseSensitive := fCaseSensitive;{$ENDIF}
+    {$IFDEF ESL_STRINGLIST_Duplicates}
+      TStringList(Destination).Duplicates := fDuplicates;{$ENDIF}
+    {$IFDEF ESL_STRINGLIST_Sorted}
+      TStringList(Destination).Sorted := fSorted;{$ENDIF}
+    end;
+{$IFDEF ESL_STRINGS_LineBreak}
+  Destination.LineBreak := {$IFNDEF ESL_Default}ConvertToString{$ENDIF}(fLineBreak);{$ENDIF}
+{$IFDEF ESL_STRINGS_TrailingLineBreak}
+  Destination.TrailingLineBreak:= fTrailingLineBreak;{$ENDIF}
+{$IFDEF ESL_STRINGS_NameValueSeparator}
+  Destination.NameValueSeparator := Char(fNameValueSeparator);{$ENDIF}
+{$IFDEF ESL_STRINGS_Delimiter}
+  Destination.Delimiter := Char(fDelimiter);{$ENDIF}
+{$IFDEF ESL_STRINGS_StrictDelimiter}
+  Destination.StrictDelimiter := fStrictDelimiter;{$ENDIF}
+{$IFDEF ESL_STRINGS_QuoteChar}
+  Destination.QuoteChar := Char(fQuoteChar);{$ENDIF}
+  // copy data
+  Destination.Capacity := fCount; // preallocate
+  For i := LowIndex to HighIndex do
+    Destination.AddObject({$IFNDEF ESL_Default}ConvertToString{$ENDIF}(fItems[i].Str),fItems[i].Obj);
+finally
+  Destination.EndUpdate;
+end;
 end;
 
 {$ENDIF ESL_ClassImplementation}

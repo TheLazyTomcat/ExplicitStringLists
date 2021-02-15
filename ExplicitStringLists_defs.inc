@@ -5,6 +5,7 @@
 {$IFDEF FPC}
   {$MODE ObjFPC}{$H+}
   {$MODESWITCH CLASSICPROCVARS+}
+  {$MODESWITCH DUPLICATELOCALS+}
   {$INLINE ON}
   {$DEFINE CanInline}
   {$DEFINE FPC_DisableWarns}
@@ -18,6 +19,20 @@
 {$ENDIF}
 
 // don't touch following
+
+
+{$UNDEF ESL_STRINGLIST_OwnsObjects}
+{$UNDEF ESL_STRINGLIST_CaseSensitive}
+{$UNDEF ESL_STRINGLIST_Duplicates}
+{$UNDEF ESL_STRINGLIST_Sorted}
+
+{$UNDEF ESL_STRINGS_LineBreak}
+{$UNDEF ESL_STRINGS_TrailingLineBreak}
+{$UNDEF ESL_STRINGS_NameValueSeparator}
+{$UNDEF ESL_STRINGS_Delimiter}
+{$UNDEF ESL_STRINGS_StrictDelimiter}
+{$UNDEF ESL_STRINGS_QuoteChar}
+
 {$UNDEF ESL_ClassTypes}
 {$UNDEF ESL_ClassDeclaration}
 {$UNDEF ESL_ClassImplementation}

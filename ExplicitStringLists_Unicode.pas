@@ -5,6 +5,7 @@ unit ExplicitStringLists_Unicode;
 interface
 
 uses
+  Classes,
   AuxTypes,
   ExplicitStringLists_Base;
 
@@ -13,6 +14,8 @@ uses
 type
   TESLCharType   = UnicodeChar;
   TESLStringType = UnicodeString;
+
+  TESLPCharType = ^TESLCharType;
 
 type
   TUnicodeStringList = class; // forward declaration
@@ -38,7 +41,7 @@ type
 implementation
 
 uses
-  SysUtils, Classes,
+  SysUtils,
   StrRect;
 
 {$DEFINE ESL_ClassImplementation}
