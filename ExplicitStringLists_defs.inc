@@ -44,11 +44,10 @@
 {$UNDEF ESL_Unicode}
 {$UNDEF ESL_Default}
 
-{$UNDEF ESL_ShortHelper}
-
 {$UNDEF ESL_DEFAULT_Short}
 {$UNDEF ESL_DEFAULT_Ansi}
 {$UNDEF ESL_DEFAULT_Unicode}
+
 {$IFOPT H+}
   // long strings...
   {$IFDEF Unicode}

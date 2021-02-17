@@ -124,6 +124,8 @@
     procedure Assign(Source: TStrings); override;
     procedure AssignTo(Destination: TESLClassType); overload; virtual;
     procedure AssignTo(Destination: TStrings); override;
+    // streaming methods
+    procedure LoadFromStream(Stream: TStream; out Endianness: TESLStringEndianness); override;
     // list data properties
     property Items[Index: Integer]: TESLListItem read GetItem;
     property Strings[Index: Integer]: TESLStringType read GetString write SetString; default;
@@ -572,22 +574,85 @@ end;
 //------------------------------------------------------------------------------
 
 procedure TESLClassType.WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TESLStringEndianness);
+{$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+var
+  Temp: UnicodeString;
+{$IFEND}
 begin
-{$message 'implement'}
+If CheckIndex(Index) then
+  begin
+    If Length(fItems[Index].Str) > 0 then
+      begin
+      {$IF Defined(ESL_Short) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Short))}
+        Stream.WriteBuffer(fItems[Index].Str[1],Length(fItems[Index].Str) * SizeOf(TESLCharType));
+      {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+        If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
+          begin
+            Temp := fItems[Index].Str;
+            UniqueString(Temp);
+            WideSwapEndian(PWideChar(Temp),Length(Temp));
+            Stream.WriteBuffer(TESLPCharType(Temp)^,Length(Temp) * SizeOf(TESLCharType));
+          end
+        else Stream.WriteBuffer(TESLPCharType(fItems[Index].Str)^,Length(fItems[Index].Str) * SizeOf(TESLCharType));
+      {$ELSE}
+        Stream.WriteBuffer(TESLPCharType(fItems[Index].Str)^,Length(fItems[Index].Str) * SizeOf(TESLCharType));
+      {$IFEND}
+      end;
+  end
+else raise EESLIndexOutOfBounds.CreateFmt('%s.WriteItemToStream: Index (%d) out of bounds.',[Self.ClassName,Index]);
 end;
 
 //------------------------------------------------------------------------------
 
 procedure TESLClassType.WriteLineBreakToStream(Stream: TStream; Endianness: TESLStringEndianness);
+{$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+var
+  Temp: UnicodeString;
+{$IFEND}
 begin
-{$message 'implement'}
+If Length(fLineBreak) > 0 then
+  begin
+  {$IF Defined(ESL_Short) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Short))}
+    Stream.WriteBuffer(fLineBreak[1],Length(fLineBreak) * SizeOf(TESLCharType));
+  {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+    If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
+      begin
+        Temp := fLineBreak;
+        UniqueString(Temp);
+        WideSwapEndian(PWideChar(Temp),Length(Temp));
+        Stream.WriteBuffer(TESLPCharType(Temp)^,Length(Temp) * SizeOf(TESLCharType));
+      end
+    else Stream.WriteBuffer(TESLPCharType(fLineBreak)^,Length(fLineBreak) * SizeOf(TESLCharType));
+  {$ELSE}
+    Stream.WriteBuffer(TESLPCharType(fLineBreak)^,Length(fLineBreak) * SizeOf(TESLCharType));
+  {$IFEND}  
+  end;
 end;
 
 //------------------------------------------------------------------------------
 
 procedure TESLClassType.WriteBOMToStream(Stream: TStream; Endianness: TESLStringEndianness);
 begin
-{$message 'implement'}
+{$IF Defined(ESL_UTF8)}
+Stream_WriteUInt8(Stream,$EF);
+Stream_WriteUInt8(Stream,$BB);
+Stream_WriteUInt8(Stream,$BF);
+{$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+If Endianness = seSystem then
+  Endianness := GetSystemEndianness;
+case Endianness of
+  seLittle: begin
+              Stream_WriteUInt8(Stream,$FF);
+              Stream_WriteUInt8(Stream,$FE);
+            end;
+  seBig:    begin
+              Stream_WriteUInt8(Stream,$FE);
+              Stream_WriteUInt8(Stream,$FF);
+            end;
+else
+  raise EESLInvalidValue.CreateFmt('%s.WriteBOMToStream: Invalid endianness (%d).',[Self.ClassName,Ord(Endianness)]);
+end;
+{$IFEND}
 end;
 
 {-------------------------------------------------------------------------------
@@ -1473,6 +1538,155 @@ try
 finally
   Destination.EndUpdate;
 end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.LoadFromStream(Stream: TStream; out Endianness: TESLStringEndianness);
+const
+  ReadBufferSize = 64 * 1024; // 64KiB
+{$message 'test on small buffers with odd size'}
+var
+  Buffer:         TMemoryBuffer;
+  BufferOff:      TMemSize;
+  BytesRead:      Integer;
+  CharsRead:      Integer;
+{$IF Defined(ESL_Short) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Short)))}
+  {$DEFINE ESL_LOCAL_Short}
+  StrBuffer:      AnsiString;
+{$ELSE}
+  {$UNDEF ESL_LOCAL_Short}
+  StrBuffer:      TESLStringType;
+{$IFEND}
+  StrBufferOff:   TStrSize;
+
+  procedure ProcessStringBuffer(var StringBuffer: {$IFDEF ESL_LOCAL_Short}AnsiString{$ELSE}TESLStringType{$ENDIF});
+
+    Function BreakPos(const Str: TESLStringType; StartFrom: Integer): Integer;
+    var
+      ii: Integer;
+    begin
+      Result := 0;
+      For ii := StartFrom to Length(Str) do
+        If IsBreakChar(Str[ii]) then
+          begin
+            Result := ii;
+            Break{For ii};
+          end;
+    end;
+    
+  var
+    WorkingOffset:  TStrSize;
+    BreakPosition:  TStrSize;
+  begin
+    If Length(StringBuffer) > 0 then
+      begin
+        WorkingOffset := 1;
+        repeat
+          If not IsBreakChar(StringBuffer[WorkingOffset],False) or
+            ((Length(StringBuffer) - WorkingOffset) >= 1) then
+            begin
+              BreakPosition := BreakPos(StrBuffer,WorkingOffset);
+              If BreakPosition > 0 then
+                begin
+                  If BreakPosition > WorkingOffset then
+                    Add({$IFDEF ESL_LOCAL_Short}TESLStringType{$ENDIF}(Copy(StringBuffer,WorkingOffset,BreakPosition - WorkingOffset)))
+                  else
+                    Add(TESLStringType(''));
+                  If BreakPosition < Length(StringBuffer) then
+                    begin
+                      If (StringBuffer[BreakPosition] <> StringBuffer[Succ(BreakPosition)]) and
+                         IsBreakChar(StringBuffer[Succ(BreakPosition)],False) and
+                         (Ord(StringBuffer[BreakPosition]) <> 0) then
+                        Inc(BreakPosition);
+                    end;
+                  WorkingOffset := Succ(BreakPosition);
+                end;
+            end
+          else Break{repeat}
+        until BreakPosition <= 0;
+        System.Delete(StringBuffer,1,Pred(WorkingOffset));
+      end;
+  end;
+
+begin
+Endianness := seSystem;
+BeginUpdate;
+try
+  DoListChanging;
+  Clear;
+  If Stream.Position < Stream.Size then // is there anything to read?
+    begin
+      BufferGet(Buffer,ReadBufferSize);
+      try
+      {$IF Defined(ESL_UTF8)}
+        // read BOM if present
+        If Stream.Size - Stream.Position >= 3{length of UTF8 BOM} then
+          begin
+            If Stream_ReadUInt8(Stream) <> $EF then
+              Stream.Seek(-1,soCurrent)
+            else If Stream_ReadUInt8(Stream) <> $BB then
+              Stream.Seek(-2,soCurrent)
+            else If Stream_ReadUInt8(Stream) <> $BF then
+              Stream.Seek(-3,soCurrent);
+          end;
+      {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+        // read BOM and set endianness according to it
+        If Stream.Size - Stream.Position >= 2{length of UTF16 BOM} then
+          begin
+            case Stream_ReadUInt16(Stream) of
+              $FFFE:  If GetSystemEndianness = seLittle then
+                        Endianness := seBig
+                      else
+                        Endianness := seLittle;
+              $FEFF:  Endianness := GetSystemEndianness;
+            else
+              // no BOM stored
+              Stream.Seek(-2,soCurrent);
+            end;
+          end;
+      {$IFEND}
+        {$message 'implement'}
+        BufferOff := 0;
+        StrBuffer := '';
+        while Stream.Position < Stream.Size do
+          begin
+            BytesRead := Stream.Read(BufferMemory(Buffer,BufferOff)^,BufferSize(Buffer) - BufferOff) + LongInt(BufferOff);
+            CharsRead := BytesRead div SizeOf(TESLCharType);
+          {$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+            // correct endianness
+            If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
+              WideSwapEndian(PWideChar(BufferMemory(Buffer,BufferOff)),CharsRead);
+          {$IFEND}
+            // copy read bytes from read buffer into string buffer
+            StrBufferOff := Length(StrBuffer);
+            SetLength(StrBuffer,StrBufferOff + CharsRead);
+            If (Length(StrBuffer) > StrBufferOff) and (Length(StrBuffer) > 0) then
+              System.Move(BufferMemory(Buffer)^,StrBuffer[StrBufferOff + 1],CharsRead * SizeOf(TESLCharType));
+          {$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+            // discard bytes copied from general buffer into string buffer, move remaining bytes down
+            BufferOff := BytesRead mod SizeOf(TESLCharType);
+            If BufferOff <> 0 then
+              System.Move(BufferMemory(Buffer,BufferSize(Buffer)- BufferOff)^,BufferMemory(Buffer)^,BufferOff);
+          {$IFEND}
+            ProcessStringBuffer(StrBuffer);
+          end;
+        If Length(StrBuffer) > 0 then
+          begin
+            If IsBreakChar(StrBuffer[1]) then
+              Add(TESLStringType(''))
+            else
+              Add({$IFDEF ESL_LOCAL_Short}TESLStringType{$ENDIF}(StrBuffer));
+          end;
+        fSorted := False;
+      finally
+        BufferFinal(Buffer);
+      end;
+		end;
+  DoListChange;
+finally
+  EndUpdate;
+end
 end;
 
 {$ENDIF ESL_ClassImplementation}

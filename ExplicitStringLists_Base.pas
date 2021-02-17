@@ -98,7 +98,7 @@ type
     procedure WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TESLStringEndianness); virtual; abstract;
     procedure WriteLineBreakToStream(Stream: TStream; Endianness: TESLStringEndianness); virtual; abstract;
     procedure WriteBOMToStream(Stream: TStream; Endianness: TESLStringEndianness); virtual; abstract;
-    //class procedure WideSwapEndian(Data: PWideChar; Count: TStrSize); virtual;
+    class procedure WideSwapEndian(Data: PWideChar; Count: TStrSize); virtual;
   public
     class Function GetSystemEndianness: TESLStringEndianness; virtual;    // can only return seLittle or seBig, never seSystem
     constructor Create;
@@ -143,10 +143,6 @@ type
     procedure Assign(Source: TStrings); overload; virtual; abstract;
     procedure AssignTo(Destination: TStrings); overload; virtual; abstract;
     // streaming methods
-    //procedure LoadFromStream(Stream: TStream; out Endianness: TStringEndianness); overload; virtual; abstract;
-    //procedure LoadFromStream(Stream: TStream); overload; virtual;
-    //procedure LoadFromFile(const FileName: String; out Endianness: TStringEndianness); overload; virtual;
-    //procedure LoadFromFile(const FileName: String); overload; virtual;
   {
     BOM is written only for UTF8-, Wide- and UnicodeStrings.
     Endiannes affects only Wide- and UnicodeStrings, it has no meaning for
@@ -154,6 +150,10 @@ type
   }
     procedure SaveToStream(Stream: TStream; WriteBOM: Boolean = True; Endianness: TESLStringEndianness = seSystem); virtual;
     procedure SaveToFile(const FileName: String; WriteBOM: Boolean = True; Endianness: TESLStringEndianness = seSystem); virtual;
+    procedure LoadFromStream(Stream: TStream; out Endianness: TESLStringEndianness); overload; virtual; abstract;
+    procedure LoadFromStream(Stream: TStream); overload; virtual;
+    procedure LoadFromFile(const FileName: String; out Endianness: TESLStringEndianness); overload; virtual;
+    procedure LoadFromFile(const FileName: String); overload; virtual;
     // list data properties
     property Objects[Index: Integer]: TObject read GetObject write SetObject;
     property DefStrings[Index: Integer]: String read GetDefString write SetDefString;
@@ -437,7 +437,7 @@ If fCount > 1 then
 end;
 
 //------------------------------------------------------------------------------
-(*
+
 class procedure TExplicitStringList.WideSwapEndian(Data: PWideChar; Count: TStrSize);
 var
   i:  Integer;
@@ -449,7 +449,7 @@ If Count > 0 then
       Inc(Data);
     end;
 end;
-*)
+
 {-------------------------------------------------------------------------------
     TExplicitStringList - public methods
 -------------------------------------------------------------------------------}
@@ -686,6 +686,38 @@ try
 finally
   FileStream.Free;
 end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.LoadFromStream(Stream: TStream);
+var
+  Endianness: TESLStringEndianness;
+begin
+LoadFromStream(Stream,Endianness);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.LoadFromFile(const FileName: String; out Endianness: TESLStringEndianness);
+var
+  FileStream: TFileStream;
+begin
+FileStream := TFileStream.Create(StrToRTL(FileName),fmOpenRead or fmShareDenyWrite);
+try
+  LoadFromStream(FileStream,Endianness);
+finally
+  FileStream.Free;
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.LoadFromFile(const FileName: String);
+var
+  Endianness: TESLStringEndianness;
+begin
+LoadFromFile(FileName,Endianness);
 end;
 
 end.

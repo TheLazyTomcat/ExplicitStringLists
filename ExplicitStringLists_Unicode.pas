@@ -42,7 +42,7 @@ implementation
 
 uses
   SysUtils,
-  StrRect;
+  StrRect, BinaryStreaming, MemoryBuffer;
 
 {$DEFINE ESL_ClassImplementation}
   {$INCLUDE './ExplicitStringLists.inc'}
