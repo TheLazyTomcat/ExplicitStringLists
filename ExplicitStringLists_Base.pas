@@ -91,14 +91,19 @@ type
     procedure Initialize; virtual;
     procedure Finalize; virtual;
     // auxiliary methods
-    Function InternalExtract(Index: Integer): TObject; virtual; abstract;
-    Function SortCompare(Idx1,Idx2: Integer): Integer; virtual; abstract;    
-    procedure SortItems(Reversed: Boolean = False); virtual;
+    Function SortCompare(Idx1,Idx2: Integer): Integer; virtual; abstract;
     Function GetWriteSize: TMemSize; virtual; abstract; // for preallocations
     procedure WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TESLStringEndianness); virtual; abstract;
     procedure WriteLineBreakToStream(Stream: TStream; Endianness: TESLStringEndianness); virtual; abstract;
     procedure WriteBOMToStream(Stream: TStream; Endianness: TESLStringEndianness); virtual; abstract;
     class procedure WideSwapEndian(Data: PWideChar; Count: TStrSize); virtual;
+    class Function StrBufferSize(Buffer: Pointer): TMemSize; virtual; abstract;
+    class Function CharSize: TMemSize; virtual; abstract;
+    // internal methods
+    Function InternalExtract(Index: Integer): TObject; virtual; abstract;
+    procedure InternalSort(Reversed: Boolean = False); virtual;
+    Function InternalGetText: Pointer; virtual;
+    procedure InternalSetText(Text: Pointer); virtual;
   public
     class Function GetSystemEndianness: TESLStringEndianness; virtual;    // can only return seLittle or seBig, never seSystem
     constructor Create;
@@ -193,7 +198,7 @@ type
 implementation
 
 uses
-  StrRect, ListSorters;
+  StrRect, ListSorters, StaticMemoryStream;
 
 {===============================================================================
 --------------------------------------------------------------------------------
@@ -413,7 +418,21 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TExplicitStringList.SortItems(Reversed: Boolean = False);
+class procedure TExplicitStringList.WideSwapEndian(Data: PWideChar; Count: TStrSize);
+var
+  i:  Integer;
+begin
+If Count > 0 then
+  For i := 0 to Pred(Count) do
+    begin
+      PUInt16(Data)^ := UInt16(PUInt16(Data)^ shr 8) or UInt16(PUInt16(Data)^ shl 8);
+      Inc(Data);
+    end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.InternalSort(Reversed: Boolean = False);
 var
   Sorter: TListSorter;
 begin
@@ -438,16 +457,40 @@ end;
 
 //------------------------------------------------------------------------------
 
-class procedure TExplicitStringList.WideSwapEndian(Data: PWideChar; Count: TStrSize);
+Function TExplicitStringList.InternalGetText: Pointer;
 var
-  i:  Integer;
+  Size: TMemSize;
 begin
-If Count > 0 then
-  For i := 0 to Pred(Count) do
-    begin
-      PUInt16(Data)^ := UInt16(PUInt16(Data)^ shr 8) or UInt16(PUInt16(Data)^ shl 8);
-      Inc(Data);
-    end;
+{$message 'implement'}
+Size := GetWriteSize;
+If Size > 0 then
+  begin
+    AllocMem(Size + CharSize); // zeroes memory
+  end
+else Result := nil;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.InternalSetText(Text: Pointer);
+var
+  Stream: TStaticMemoryStream;
+begin
+BeginUpdate;
+try
+  DoListChanging;
+  Clear;
+  Stream := TStaticMemoryStream.Create(Text,StrBufferSize(Text));
+  try
+    Stream.Seek(0,soBeginning);
+    LoadFromStream(Stream);
+  finally
+    Stream.Free;
+  end;
+  DoListChange;
+finally
+  EndUpdate;
+end;
 end;
 
 {-------------------------------------------------------------------------------

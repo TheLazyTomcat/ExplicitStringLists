@@ -48,13 +48,16 @@
     Function ExtractValueStr(const Str: TESLStringType): TESLStringType; virtual;
     Function ExtractNameAndValueStr(const Str: TESLStringType; out Name,Value: TESLStringType): Boolean; virtual;
     Function IndexForSortedAddition(const Str: TESLStringType): Integer; virtual;
-    Function InternalExtract(Index: Integer): TObject; override;
     Function CompareStrings(const Str1, Str2: TESLStringType): Integer; overload; virtual;
     Function SortCompare(Idx1,Idx2: Integer): Integer; override;
     Function GetWriteSize: TMemSize; override;
     procedure WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TESLStringEndianness); override;
     procedure WriteLineBreakToStream(Stream: TStream; Endianness: TESLStringEndianness); override;
     procedure WriteBOMToStream(Stream: TStream; Endianness: TESLStringEndianness); override;
+    class Function StrBufferSize(Buffer: Pointer): TMemSize; override;
+    class Function CharSize: TMemSize; override;
+    // internal methods
+    Function InternalExtract(Index: Integer): TObject; override;        
   public
     // utility methods
     class Function ConvertFromString(const Str: String): TESLStringType; virtual;
@@ -126,6 +129,9 @@
     procedure AssignTo(Destination: TStrings); override;
     // streaming methods
     procedure LoadFromStream(Stream: TStream; out Endianness: TESLStringEndianness); override;
+    // other methods
+    Function GetText: TESLPCharType; virtual;
+    procedure SetText(Text: TESLPCharType); virtual;
     // list data properties
     property Items[Index: Integer]: TESLListItem read GetItem;
     property Strings[Index: Integer]: TESLStringType read GetString write SetString; default;
@@ -526,19 +532,6 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function TESLClassType.InternalExtract(Index: Integer): TObject;
-begin
-If CheckIndex(Index) then
-  begin
-    Result := fItems[Index].Obj;
-    fItems[Index].Obj := nil;
-    Delete(Index);
-  end
-else Result := nil;
-end;
-
-//------------------------------------------------------------------------------
-
 Function TESLClassType.CompareStrings(const Str1, Str2: TESLStringType): Integer;
 begin
 Result := CompareStrings(Str1,Str2,fCaseSensitive);
@@ -569,6 +562,7 @@ For i := LowIndex to HighIndex do
     If (i < HighIndex) or fTrailingLineBreak then
       Inc(Result,Length(fLineBreak));
   end;
+Result := Result * SizeOf(TESLCharType);
 end;
 
 //------------------------------------------------------------------------------
@@ -653,6 +647,49 @@ else
   raise EESLInvalidValue.CreateFmt('%s.WriteBOMToStream: Invalid endianness (%d).',[Self.ClassName,Ord(Endianness)]);
 end;
 {$IFEND}
+end;
+
+//------------------------------------------------------------------------------
+
+class Function TESLClassType.StrBufferSize(Buffer: Pointer): TMemSize;
+var
+  CharBuff: TESLPCharType;
+begin
+{
+  there are absolutely no checks, this function simply reads memory until zero
+  is encountered or an exception is raised
+}
+Result := 0;
+If Assigned(Buffer) then
+  begin
+    CharBuff := TESLPCharType(Buffer);
+    while Ord(CharBuff^) <> 0 do
+      begin
+        Inc(Result);
+        Inc(CharBuff);
+      end
+  end;
+Result := Result * SizeOf(TESLCharType);
+end;
+
+//------------------------------------------------------------------------------
+
+class Function TESLClassType.CharSize: TMemSize;
+begin
+Result := SizeOf(TESLCharType);
+end;
+
+//------------------------------------------------------------------------------
+
+Function TESLClassType.InternalExtract(Index: Integer): TObject;
+begin
+If CheckIndex(Index) then
+  begin
+    Result := fItems[Index].Obj;
+    fItems[Index].Obj := nil;
+    Delete(Index);
+  end
+else Result := nil;
 end;
 
 {-------------------------------------------------------------------------------
@@ -1267,7 +1304,7 @@ If not fSorted or not fStrictSorted then
     fSorted := False;
     fCompareFuncIndex := nil;
     fCompareFuncString := nil;
-    SortItems(Reversed);
+    InternalSort(Reversed);
   end
 else raise EESLSortedList.CreateFmt('%s.Sort: Cannot sort sorted list.',[Self.ClassName]);
 end;
@@ -1281,7 +1318,7 @@ If not fSorted or not fStrictSorted then
     fSorted := False;
     fCompareFuncIndex := CompareFunc;
     fCompareFuncString := nil;
-    SortItems(Reversed);
+    InternalSort(Reversed);
   end
 else raise EESLSortedList.CreateFmt('%s.CustomSort: Cannot sort sorted list.',[Self.ClassName]);
 end;
@@ -1295,7 +1332,7 @@ If not fSorted or not fStrictSorted then
     fSorted := False;
     fCompareFuncIndex := nil;
     fCompareFuncString := CompareFunc;
-    SortItems(Reversed);
+    InternalSort(Reversed);
   end
 else raise EESLSortedList.CreateFmt('%s.CustomSort: Cannot sort sorted list.',[Self.ClassName]);
 end;
@@ -1545,12 +1582,11 @@ end;
 procedure TESLClassType.LoadFromStream(Stream: TStream; out Endianness: TESLStringEndianness);
 const
   ReadBufferSize = 64 * 1024; // 64KiB
-{$message 'test on small buffers with odd size'}
 var
-  Buffer:         TMemoryBuffer;
-  BufferOff:      TMemSize;
   BytesRead:      Integer;
   CharsRead:      Integer;
+  Buffer:         TMemoryBuffer;
+  BufferOff:      TMemSize;
 {$IF Defined(ESL_Short) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Short)))}
   {$DEFINE ESL_LOCAL_Short}
   StrBuffer:      AnsiString;
@@ -1619,35 +1655,35 @@ try
     begin
       BufferGet(Buffer,ReadBufferSize);
       try
+        BufferOff := 0;
       {$IF Defined(ESL_UTF8)}
         // read BOM if present
-        If Stream.Size - Stream.Position >= 3{length of UTF8 BOM} then
+        BytesRead := Stream.Read(BufferMemory(Buffer)^,3{length of UTF8 BOM});
+        If BytesRead = 3 then
           begin
-            If Stream_ReadUInt8(Stream) <> $EF then
-              Stream.Seek(-1,soCurrent)
-            else If Stream_ReadUInt8(Stream) <> $BB then
-              Stream.Seek(-2,soCurrent)
-            else If Stream_ReadUInt8(Stream) <> $BF then
-              Stream.Seek(-3,soCurrent);
-          end;
+            If (PByte(BufferMemory(Buffer))^ <> $EF) or
+               (PByte(BufferMemory(Buffer,1))^ <> $BB) or
+               (PByte(BufferMemory(Buffer,2))^ <> $BF) then
+              BufferOff := 3;
+          end
+        else BufferOff := BytesRead;
       {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
         // read BOM and set endianness according to it
-        If Stream.Size - Stream.Position >= 2{length of UTF16 BOM} then
+        BytesRead := Stream.Read(BufferMemory(Buffer)^,2{length of UTF16 BOM});
+        If BytesRead = 2 then
           begin
-            case Stream_ReadUInt16(Stream) of
+            case PUInt16(BufferMemory(Buffer))^ of
               $FFFE:  If GetSystemEndianness = seLittle then
                         Endianness := seBig
                       else
                         Endianness := seLittle;
               $FEFF:  Endianness := GetSystemEndianness;
             else
-              // no BOM stored
-              Stream.Seek(-2,soCurrent);
+              BufferOff := 2;
             end;
-          end;
+          end
+        else BufferOff := BytesRead;
       {$IFEND}
-        {$message 'implement'}
-        BufferOff := 0;
         StrBuffer := '';
         while Stream.Position < Stream.Size do
           begin
@@ -1687,6 +1723,20 @@ try
 finally
   EndUpdate;
 end
+end;
+
+//------------------------------------------------------------------------------
+
+Function TESLClassType.GetText: TESLPCharType;
+begin
+Result := TESLPCharType(InternalGetText);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.SetText(Text: TESLPCharType);
+begin
+InternalSetText(Pointer(Text));
 end;
 
 {$ENDIF ESL_ClassImplementation}
