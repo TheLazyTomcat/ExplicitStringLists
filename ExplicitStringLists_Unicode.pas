@@ -13,9 +13,11 @@ uses
 
 type
   TESLCharType   = UnicodeChar;
-  TESLStringType = UnicodeString;
+  TESLPCharType  = PUnicodeChar;
 
-  TESLPCharType = ^TESLCharType;
+  TESLStringType     = UnicodeString;
+  TESLPStringType    = PUnicodeString;
+  TESLLongStringType = UnicodeString;
 
 type
   TUnicodeStringList = class; // forward declaration
@@ -28,9 +30,9 @@ type
   TESLSortCompareIndexType  = TESLUnicodeSortCompareIndex;
   TESLSortCompareStringType = TESLUnicodeSortCompareString;
 
-  {$DEFINE ESL_ClassTypes}
-    {$INCLUDE './ExplicitStringLists.inc'}
-  {$UNDEF ESL_ClassTypes}
+{$DEFINE ESL_ClassTypes}
+  {$INCLUDE './ExplicitStringLists.inc'}
+{$UNDEF ESL_ClassTypes}
 
   TUnicodeStringList = class(TExplicitStringList)
   {$DEFINE ESL_ClassDeclaration}
@@ -41,12 +43,11 @@ type
 implementation
 
 uses
-  SysUtils,
-  StrRect, BinaryStreaming, MemoryBuffer;
+  SysUtils, 
+  StrRect, BinaryStreaming, MemoryBuffer, StaticMemoryStream;
 
 {$DEFINE ESL_ClassImplementation}
   {$INCLUDE './ExplicitStringLists.inc'}
 {$UNDEF ESL_ClassImplementation}
 
 end.
-

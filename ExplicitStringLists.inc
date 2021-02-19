@@ -34,6 +34,18 @@
     procedure SetValueFromIndex(Index: Integer; const Value: TESLStringType); virtual;
     Function GetLineBreakStyle: TESLLineBreakStyle; override;
     procedure SetLineBreakStyle(Value: TESLLineBreakStyle); override;
+    Function GetLongStrText: TESLLongStringType; virtual;
+    procedure SetLongStrText(const Value: TESLLongStringType); virtual;
+    Function GetLongDelimitedText: TESLLongStringType; virtual;
+    procedure SetLongDelimitedText(const Value: TESLLongStringType); virtual;
+    Function GetLongCommaText: TESLLongStringType; virtual;
+    procedure SetLongCommaText(const Value: TESLLongStringType); virtual;
+    Function GetStrText: TESLStringType; virtual;
+    procedure SetStrText(const Value: TESLStringType); virtual;
+    Function GetDelimitedText: TESLStringType; virtual;
+    procedure SetDelimitedText(const Value: TESLStringType); virtual;
+    Function GetCommaText: TESLStringType; virtual;
+    procedure SetCommaText(const Value: TESLStringType); virtual;
     // inherited list methods
     Function GetCapacity: Integer; override;
     // list manipulation methods
@@ -50,7 +62,7 @@
     Function IndexForSortedAddition(const Str: TESLStringType): Integer; virtual;
     Function CompareStrings(const Str1, Str2: TESLStringType): Integer; overload; virtual;
     Function SortCompare(Idx1,Idx2: Integer): Integer; override;
-    Function GetWriteSize: TMemSize; override;
+    Function GetWriteLength: TStrSize; override;
     procedure WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TESLStringEndianness); override;
     procedure WriteLineBreakToStream(Stream: TStream; Endianness: TESLStringEndianness); override;
     procedure WriteBOMToStream(Stream: TStream; Endianness: TESLStringEndianness); override;
@@ -130,8 +142,10 @@
     // streaming methods
     procedure LoadFromStream(Stream: TStream; out Endianness: TESLStringEndianness); override;
     // other methods
-    Function GetText: TESLPCharType; virtual;
-    procedure SetText(Text: TESLPCharType); virtual;
+    Function GetText(out Size: TMemSize): TESLPCharType; overload; virtual;
+    Function GetText: TESLPCharType; overload; virtual;
+    procedure SetText(Text: TESLPCharType; Size: TMemSize); overload; virtual;
+    procedure SetText(Text: TESLPCharType); overload; virtual;
     // list data properties
     property Items[Index: Integer]: TESLListItem read GetItem;
     property Strings[Index: Integer]: TESLStringType read GetString write SetString; default;
@@ -143,9 +157,34 @@
     property LineBreak: TESLStringType read fLineBreak write fLineBreak;
     property Delimiter: TESLCharType read fDelimiter write fDelimiter;
     property QuoteChar: TESLCharType read fQuoteChar write fQuoteChar;
+  {
+    Long*Text and *Text are returning the same strings in most cases, only for
+    short-string lists they are returning different type and possibly also
+    string (one which is not limited in length).
+    It is here because one might want text of short-string list without it
+    being limited to 255 characters (max. length of short string).
+    Note that returned short strings are only truncated from full length, they
+    are not build separately, so there might be missing closing quotes and
+    other problems. You have been warned.
+  }
+    property LongText: TESLLongStringType read GetLongStrText write SetLongStrText;
+    property LongDelimitedText: TESLLongStringType read GetLongDelimitedText write SetLongDelimitedText;
+    property LongCommaText: TESLLongStringType read GetLongCommaText write SetLongCommaText;
+    property Text: TESLStringType read GetStrText write SetStrText;
+    property DelimitedText: TESLStringType read GetDelimitedText write SetDelimitedText;
+    property CommaText: TESLStringType read GetCommaText write SetCommaText;
+
 {$ENDIF ESL_ClassDeclaration}
 
 {$IFDEF ESL_ClassImplementation}
+
+{$IF Defined(ESL_Short) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Short)))}
+  {$DEFINE ESL_LOCAL_Short}
+{$IFEND}
+
+{$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+  {$DEFINE ESL_LOCAL_Wide}
+{$IFEND}
 
 const
   ESL_DEFVAL_NameValueSeparator = TESLCharType('=');
@@ -173,7 +212,7 @@ begin
 {$IF Declared(Delimiter)}         {$DEFINE ESL_STRINGS_Delimiter}         {$IFEND}
 {$IF Declared(StrictDelimiter)}   {$DEFINE ESL_STRINGS_StrictDelimiter}   {$IFEND}
 {$IF Declared(QuoteChar)}         {$DEFINE ESL_STRINGS_QuoteChar}         {$IFEND}
-raise Exception.Create('This method is not supposed to be called.');
+raise Exception.Create('TStringsFeaturesChecker.FeatureChecks: This method is not supposed to be called.');
 end;
 
 procedure TStringListFeaturesChecker.FeatureChecks;
@@ -182,7 +221,221 @@ begin
 {$IF Declared(CaseSensitive)}{$DEFINE ESL_STRINGLIST_CaseSensitive}{$IFEND}
 {$IF Declared(Duplicates)}   {$DEFINE ESL_STRINGLIST_Duplicates}   {$IFEND}
 {$IF Declared(Sorted)}       {$DEFINE ESL_STRINGLIST_Sorted}       {$IFEND}
-raise Exception.Create('This method is not supposed to be called.');
+raise Exception.Create('TStringListFeaturesChecker.FeatureChecks: This method is not supposed to be called.');
+end;
+
+type
+  TESLDelimitedTextParserEvent = procedure(const Str: TESLStringType) of object;
+
+type
+  TESLDelimitedTextParser = class(TESLDelimitedTextParserBase)
+  protected
+    fDelimiter:       TESLCharType;
+    fQuoteChar:       TESLCharType;
+    fStrictDelimiter: Boolean;
+    fOnNewString:     TESLDelimitedTextParserEvent;
+    // parsing vars
+    fParsedString:    TESLLongStringType;
+    Function RemoveDoubleQuotes(const Str: TESLLongStringType): TESLLongStringType; virtual;
+    Function LookAhead(IsChar: TESLCharType): Boolean; virtual;
+    Function CurrCharType: TESLDelimitedTextParserCharType; virtual;
+    procedure DoNewString(const Str: TESLLongStringType); virtual;
+    procedure Parse; override;
+    procedure Parse_Initial; override;
+    procedure Parse_WhiteSpace; override;
+    procedure Parse_Delimiter; override;
+    procedure Parse_NormalText; override;
+    procedure Parse_QuotedText; override;
+  public
+    constructor Create(Delimiter,QuoteChar: TESLCharType; StrictDelimiter: Boolean);
+    procedure Parse(const Text: TESLLongStringType); overload; virtual;
+    property OnNewString: TESLDelimitedTextParserEvent read fOnNewString write fOnNewString;
+  end;
+
+{-------------------------------------------------------------------------------
+    TESLDelimitedTextParserSpec - protected methods
+-------------------------------------------------------------------------------}
+
+Function TESLDelimitedTextParser.RemoveDoubleQuotes(const Str: TESLLongStringType): TESLLongStringType;
+var
+  i,ResPos: TStrSize;
+  LastChar: TESLCharType;
+begin
+If Length(Str) > 0 then
+  begin
+    SetLength(Result,Length(Str));
+    ResPos := 1;
+    LastChar := TESLCharType(not Ord(fQuoteChar));
+    For i := 1 to Length(Str) do
+      If not((Str[i] = fQuoteChar) and (LastChar = fQuoteChar)) then
+        begin
+          Result[ResPos] := Str[i];
+          Inc(ResPos);
+          LastChar := Str[i];
+        end
+      else LastChar := TESLCharType(not Ord(fQuoteChar));
+    SetLength(Result,ResPos - 1);
+  end
+else Result := '';
+end;
+
+//------------------------------------------------------------------------------
+
+Function TESLDelimitedTextParser.LookAhead(IsChar: TESLCharType): Boolean;
+begin
+If (fPosition >= 1) and (fPosition < Length(fParsedString)) then
+  Result := fParsedString[fPosition + 1] = IsChar
+else
+  Result := False;
+end;
+
+//------------------------------------------------------------------------------
+
+Function TESLDelimitedTextParser.CurrCharType: TESLDelimitedTextParserCharType;
+begin
+If Ord(fParsedString[fPosition]) in [0..32] then
+  Result := dtpcWhiteSpace
+else If fParsedString[fPosition] = fDelimiter then
+  Result := dtpcDelimiter
+else If fParsedString[fPosition] = fQuoteChar then
+  Result := dtpcQuoteChar
+else
+  Result := dtpcGeneral;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLDelimitedTextParser.DoNewString(const Str: TESLLongStringType);
+begin
+If Assigned(fOnNewString) then
+  fOnNewString({$IFDEF ESL_LOCAL_Short}TESLStringType{$ENDIF}(Str));
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLDelimitedTextParser.Parse;
+begin
+fParserState := dtpsInitial;
+fPosition := 0;
+while fPosition <= Length(fParsedString) do
+  inherited Parse;
+case fParserState of
+  dtpsDelimiter:  DoNewString('');
+  dtpsNormalText: DoNewString(Copy(fParsedString,fItemStart,fItemLength));
+  dtpsQuotedText: DoNewString(RemoveDoubleQuotes(Copy(fParsedString,fItemStart,fItemLength)));
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLDelimitedTextParser.Parse_Initial;
+begin
+fParserState := dtpsDelimiter;
+fPosition := 0;
+fItemStart := 0;
+fItemLength := 0;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLDelimitedTextParser.Parse_WhiteSpace;
+begin
+case CurrCharType of
+  dtpcWhiteSpace:;// ignore
+  dtpcDelimiter:  fParserState := dtpsDelimiter;
+  dtpcQuoteChar:  If not fStrictDelimiter then
+                    begin
+                      fItemStart := fPosition + 1;
+                      fItemLength := 0;
+                      fParserState := dtpsQuotedText;
+                    end;
+  dtpcGeneral:    If not fStrictDelimiter then
+                    begin
+                      fItemStart := fPosition;
+                      fItemLength := 1;
+                      fParserState := dtpsNormalText;
+                    end;  
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLDelimitedTextParser.Parse_Delimiter;
+begin
+case CurrCharType of
+  dtpcWhiteSpace:;// ignore
+  dtpcDelimiter:  DoNewString('');
+  dtpcQuoteChar:  begin
+                    fItemStart := fPosition + 1;
+                    fItemLength := 0;
+                    fParserState := dtpsQuotedText;
+                  end;
+  dtpcGeneral:    begin
+                    fItemStart := fPosition;
+                    fItemLength := 1;
+                    fParserState := dtpsNormalText;
+                  end;
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLDelimitedTextParser.Parse_NormalText;
+begin
+case CurrCharType of
+  dtpcWhiteSpace: If not fStrictDelimiter then
+                    begin
+                      DoNewString(Copy(fParsedString,fItemStart,fItemLength));
+                      fParserState := dtpsWhiteSpace;
+                    end
+                  else Inc(fItemLength);
+  dtpcDelimiter:  begin
+                    DoNewString(Copy(fParsedString,fItemStart,fItemLength));
+                    fParserState := dtpsDelimiter;
+                  end;
+  dtpcQuoteChar,
+  dtpcGeneral:    Inc(fItemLength);
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLDelimitedTextParser.Parse_QuotedText;
+begin
+If CurrCharType = dtpcQuoteChar then
+  begin
+    If LookAhead(fQuoteChar) then
+      begin
+        Inc(fPosition);
+        Inc(fItemLength,2);
+      end
+    else
+      begin
+        DoNewString(RemoveDoubleQuotes(Copy(fParsedString,fItemStart,fItemLength)));
+        fParserState := dtpsWhiteSpace;
+      end;
+  end
+else Inc(fItemLength);
+end;
+
+{-------------------------------------------------------------------------------
+    TESLDelimitedTextParserSpec - public methods
+-------------------------------------------------------------------------------}
+
+constructor TESLDelimitedTextParser.Create(Delimiter,QuoteChar: TESLCharType; StrictDelimiter: Boolean);
+begin
+inherited Create;
+fDelimiter := Delimiter;
+fQuoteChar := QuoteChar;
+fStrictDelimiter := StrictDelimiter;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLDelimitedTextParser.Parse(const Text: TESLLongStringType);
+begin
+fParsedString := Text;
+Parse;
 end;
 
 {-------------------------------------------------------------------------------
@@ -393,6 +646,256 @@ end;
 
 //------------------------------------------------------------------------------
 
+Function TESLClassType.GetLongStrText: TESLLongStringType;
+var
+  Stream: TWritableStaticMemoryStream;
+begin
+SetLength(Result,GetWriteLength);
+If Length(Result) > 0 then
+  begin
+    Stream := TWritableStaticMemoryStream.Create(Addr(Result[1]),Length(Result) * SizeOf(TESLCharType));
+    try
+      Stream.Seek(0,soBeginning);
+      SaveToStream(Stream,False,seSystem);
+    finally
+      Stream.Free;
+    end;
+  end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.SetLongStrText(const Value: TESLLongStringType);
+var
+  Stream: TStaticMemoryStream;
+begin
+BeginUpdate;
+try
+  DoListChanging;
+  Clear;
+  If Length(Value) > 0 then
+    begin
+      Stream := TStaticMemoryStream.Create(Addr(Value[1]),Length(Value) * SizeOf(TESLCharType));
+      try
+        Stream.Seek(0,soBeginning);
+        LoadFromStream(Stream);
+      finally
+        Stream.Free;
+      end;
+    end;
+  DoListChange;
+finally
+  EndUpdate;
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+Function TESLClassType.GetLongDelimitedText: TESLLongStringType;
+
+  Function GetRectifiedStringLength(Index: Integer): TStrSize;
+  var
+    ii:     TStrSize;
+    Quoted: Boolean;
+  begin
+    Quoted := False;
+    Result := Length(fItems[Index].Str);
+    For ii := 1 to Length(fItems[Index].Str) do
+      If (fItems[Index].Str[ii] = fQuoteChar) or
+        (fItems[Index].Str[ii] = fDelimiter) or
+        (Ord(fItems[Index].Str[ii]) in [0..32]) then
+        begin
+          If not Quoted then
+            Inc(Result,2);  // for quotechars at the start and end
+          If fItems[Index].Str[ii] = fQuoteChar then
+            Inc(Result);    // doubling quotechar
+          Quoted := True;
+        end;
+  end;
+
+  Function GetRectifiedString(Index: Integer): TESLLongStringType;
+  var
+    ii:     TStrSize;
+    ResPos: TStrSize;    
+    Quoted: Boolean;
+  begin
+    SetLength(Result,GetRectifiedStringLength(Index));
+    ResPos := 1;
+    Quoted := False;    
+    For ii := 1 to Length(fItems[Index].Str) do
+      If ResPos <= Length(Result) then
+        begin
+          If fItems[Index].Str[ii] = fQuoteChar then
+            begin
+              If ResPos < Length(Result) then
+                begin
+                  Result[ResPos] := fItems[Index].Str[ii];
+                  Inc(ResPos);
+                  Result[ResPos] := fItems[Index].Str[ii];
+                  Quoted := True;
+                end
+              else Dec(ResPos);
+            end
+          else If (fItems[Index].Str[ii] = fDelimiter) or
+            (Ord(fItems[Index].Str[ii]) in [0..32]) then
+            begin
+              Result[ResPos] := fItems[Index].Str[ii];
+              Quoted := True;
+            end
+          else Result[ResPos] := fItems[Index].Str[ii];
+          Inc(ResPos);
+        end
+      else Break{For ii};
+    SetLength(Result,ResPos - 1);
+    If Quoted then
+      Result := TESLLongStringType(fQuoteChar) + Result + TESLLongStringType(fQuoteChar);
+  end;
+
+var
+  i:    Integer;
+  Len:  TStrSize;
+  Temp: TESLLongStringType;
+begin
+Len := 0;
+// count size for preallocation
+For i := LowIndex to HighIndex do
+  If i < HighIndex then
+    Inc(Len,GetRectifiedStringLength(i) + 1{delimiter})
+  else
+    Inc(Len,GetRectifiedStringLength(i));
+// preallocate
+SetLength(Result,Len);
+// store items
+Len := 0;
+For i := LowIndex to HighIndex do
+  begin
+    Temp := GetRectifiedString(i);
+    If Length(Temp) > 0 then
+      System.Move(TESLPCharType(Temp)^,Addr(Result[Len + 1])^,Length(Temp) * SizeOf(TESLCharType));
+    Inc(Len,Length(Temp));
+    If i < HighIndex then
+      begin
+        If Len < Length(Result) then
+          Result[Len + 1] := fDelimiter
+        else
+          Break{For i};
+        Inc(Len);
+      end;    
+  end;
+// to be sure...
+If Len < Length(Result) then
+  SetLength(Result,Len);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.SetLongDelimitedText(const Value: TESLLongStringType);
+begin
+BeginUpdate;
+try
+  DoListChanging;
+  Clear;
+  with TESLDelimitedTextParser.Create(fDelimiter,fQuoteChar,fStrictDelimiter) do
+  try
+    fSorted := False;
+    OnNewString := Self.Append;
+    Parse(Value);
+  finally
+    Free;
+  end;
+  DoListChange;
+finally
+  EndUpdate;
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+Function TESLClassType.GetLongCommaText: TESLLongStringType;
+var
+  OldDelimiter: TESLCharType;
+  OldQuoteChar: TESLCharType;
+begin
+OldDelimiter := fDelimiter;
+OldQuoteChar := fQuoteChar;
+try
+  fDelimiter := ESL_DEFVAL_Delimiter;
+  fQuoteChar := ESL_DEFVAL_QuoteChar;
+  Result := GetLongDelimitedText;
+finally
+  fDelimiter := OldDelimiter;
+  fQuoteChar := OldquoteChar;
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.SetLongCommaText(const Value: TESLLongStringType);
+var
+  OldDelimiter: TESLCharType;
+  OldQuoteChar: TESLCharType;
+begin
+OldDelimiter := fDelimiter;
+OldQuoteChar := fQuoteChar;
+try
+  fDelimiter := ESL_DEFVAL_Delimiter;
+  fQuoteChar := ESL_DEFVAL_QuoteChar;
+  SetLongDelimitedText(Value);
+finally
+  fDelimiter := OldDelimiter;
+  fQuoteChar := OldquoteChar;
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+Function TESLClassType.GetStrText: TESLStringType;
+begin
+// for short strings, this will truncate the long string
+Result := {$IFDEF ESL_LOCAL_Short}TESLStringType{$ENDIF}(LongText);
+{
+  for some bizzare reason, I cannot directly use getter (GetLongStrText) when
+  compiling in Delphi 7, it will fail with invalid typecast
+}
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.SetStrText(const Value: TESLStringType);
+begin
+LongText := {$IFDEF ESL_LOCAL_Short}TESLLongStringType{$ENDIF}(Value);
+end;
+
+//------------------------------------------------------------------------------
+
+Function TESLClassType.GetDelimitedText: TESLStringType;
+begin
+Result := {$IFDEF ESL_LOCAL_Short}TESLStringType{$ENDIF}(LongDelimitedText);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.SetDelimitedText(const Value: TESLStringType);
+begin
+LongDelimitedText := {$IFDEF ESL_LOCAL_Short}TESLLongStringType{$ENDIF}(Value);
+end;
+
+//------------------------------------------------------------------------------
+
+Function TESLClassType.GetCommaText: TESLStringType;
+begin
+Result := {$IFDEF ESL_LOCAL_Short}TESLStringType{$ENDIF}(LongCommaText);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.SetCommaText(const Value: TESLStringType);
+begin
+DelimitedText := {$IFDEF ESL_LOCAL_Short}TESLLongStringType{$ENDIF}(Value);
+end;
+
+//------------------------------------------------------------------------------
+
 Function TESLClassType.GetCapacity: Integer;
 begin
 Result := Length(fItems);
@@ -551,7 +1054,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function TESLClassType.GetWriteSize: TMemSize;
+Function TESLClassType.GetWriteLength: TStrSize;
 var
   i:  Integer;
 begin
@@ -562,24 +1065,23 @@ For i := LowIndex to HighIndex do
     If (i < HighIndex) or fTrailingLineBreak then
       Inc(Result,Length(fLineBreak));
   end;
-Result := Result * SizeOf(TESLCharType);
 end;
 
 //------------------------------------------------------------------------------
 
 procedure TESLClassType.WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TESLStringEndianness);
-{$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+{$IFDEF ESL_LOCAL_Wide}
 var
   Temp: UnicodeString;
-{$IFEND}
+{$ENDIF}
 begin
 If CheckIndex(Index) then
   begin
     If Length(fItems[Index].Str) > 0 then
       begin
-      {$IF Defined(ESL_Short) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Short))}
+      {$IF Defined(ESL_LOCAL_Short)}
         Stream.WriteBuffer(fItems[Index].Str[1],Length(fItems[Index].Str) * SizeOf(TESLCharType));
-      {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+      {$ELSEIF Defined(ESL_LOCAL_Wide)}
         If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
           begin
             Temp := fItems[Index].Str;
@@ -599,16 +1101,16 @@ end;
 //------------------------------------------------------------------------------
 
 procedure TESLClassType.WriteLineBreakToStream(Stream: TStream; Endianness: TESLStringEndianness);
-{$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+{$IFDEF ESL_LOCAL_Wide}
 var
   Temp: UnicodeString;
-{$IFEND}
+{$ENDIF}
 begin
 If Length(fLineBreak) > 0 then
   begin
-  {$IF Defined(ESL_Short) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Short))}
+  {$IF Defined(ESL_LOCAL_Short)}
     Stream.WriteBuffer(fLineBreak[1],Length(fLineBreak) * SizeOf(TESLCharType));
-  {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+  {$ELSEIF Defined(ESL_LOCAL_Wide)}
     If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
       begin
         Temp := fLineBreak;
@@ -631,7 +1133,7 @@ begin
 Stream_WriteUInt8(Stream,$EF);
 Stream_WriteUInt8(Stream,$BB);
 Stream_WriteUInt8(Stream,$BF);
-{$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+{$ELSEIF Defined(ESL_LOCAL_Wide)}
 If Endianness = seSystem then
   Endianness := GetSystemEndianness;
 case Endianness of
@@ -657,7 +1159,7 @@ var
 begin
 {
   there are absolutely no checks, this function simply reads memory until zero
-  is encountered or an exception is raised
+  is encountered or something bad happens :P
 }
 Result := 0;
 If Assigned(Buffer) then
@@ -1491,6 +1993,7 @@ BeginUpdate;
 try
   DoListChanging;
   Clear;
+  fSorted := False;
   // copy properties
   If Source is TStringList then
     begin
@@ -1583,22 +2086,16 @@ procedure TESLClassType.LoadFromStream(Stream: TStream; out Endianness: TESLStri
 const
   ReadBufferSize = 64 * 1024; // 64KiB
 var
-  BytesRead:      Integer;
-  CharsRead:      Integer;
-  Buffer:         TMemoryBuffer;
-  BufferOff:      TMemSize;
-{$IF Defined(ESL_Short) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Short)))}
-  {$DEFINE ESL_LOCAL_Short}
-  StrBuffer:      AnsiString;
-{$ELSE}
-  {$UNDEF ESL_LOCAL_Short}
-  StrBuffer:      TESLStringType;
-{$IFEND}
-  StrBufferOff:   TStrSize;
+  BytesRead:    Integer;
+  CharsRead:    Integer;
+  Buffer:       TMemoryBuffer;
+  BufferOff:    TMemSize;
+  StrBuffer:    TESLLongStringType;
+  StrBufferOff: TStrSize;
 
-  procedure ProcessStringBuffer(var StringBuffer: {$IFDEF ESL_LOCAL_Short}AnsiString{$ELSE}TESLStringType{$ENDIF});
+  procedure ProcessStringBuffer(var StringBuffer: TESLLongStringType);
 
-    Function BreakPos(const Str: TESLStringType; StartFrom: Integer): Integer;
+    Function BreakPos(const Str: TESLLongStringType; StartFrom: Integer): Integer;
     var
       ii: Integer;
     begin
@@ -1615,8 +2112,18 @@ var
     WorkingOffset:  TStrSize;
     BreakPosition:  TStrSize;
   begin
+  {
+    folloving are all recognized linebreak sequences:
+
+      #10#13
+      #13#10
+      #10 not followed by #13 or #0
+      #13 not followed by #10 or #0
+      #0 not followed by #10 or #13
+  }
     If Length(StringBuffer) > 0 then
       begin
+        BreakPosition := 0;
         WorkingOffset := 1;
         repeat
           If not IsBreakChar(StringBuffer[WorkingOffset],False) or
@@ -1651,8 +2158,10 @@ BeginUpdate;
 try
   DoListChanging;
   Clear;
+  fSorted := False;
   If Stream.Position < Stream.Size then // is there anything to read?
     begin
+      BufferInit(Buffer);
       BufferGet(Buffer,ReadBufferSize);
       try
         BufferOff := 0;
@@ -1667,7 +2176,7 @@ try
               BufferOff := 3;
           end
         else BufferOff := BytesRead;
-      {$ELSEIF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+      {$ELSEIF Defined(ESL_LOCAL_Wide)}
         // read BOM and set endianness according to it
         BytesRead := Stream.Read(BufferMemory(Buffer)^,2{length of UTF16 BOM});
         If BytesRead = 2 then
@@ -1689,22 +2198,22 @@ try
           begin
             BytesRead := Stream.Read(BufferMemory(Buffer,BufferOff)^,BufferSize(Buffer) - BufferOff) + LongInt(BufferOff);
             CharsRead := BytesRead div SizeOf(TESLCharType);
-          {$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+          {$IFDEF ESL_LOCAL_Wide}
             // correct endianness
             If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
               WideSwapEndian(PWideChar(BufferMemory(Buffer,BufferOff)),CharsRead);
-          {$IFEND}
+          {$ENDIF}
             // copy read bytes from read buffer into string buffer
             StrBufferOff := Length(StrBuffer);
             SetLength(StrBuffer,StrBufferOff + CharsRead);
             If (Length(StrBuffer) > StrBufferOff) and (Length(StrBuffer) > 0) then
               System.Move(BufferMemory(Buffer)^,StrBuffer[StrBufferOff + 1],CharsRead * SizeOf(TESLCharType));
-          {$IF Defined(ESL_Wide) or Defined(ESL_Unicode) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Unicode))}
+          {$IFDEF ESL_LOCAL_Wide}
             // discard bytes copied from general buffer into string buffer, move remaining bytes down
             BufferOff := BytesRead mod SizeOf(TESLCharType);
             If BufferOff <> 0 then
               System.Move(BufferMemory(Buffer,BufferSize(Buffer)- BufferOff)^,BufferMemory(Buffer)^,BufferOff);
-          {$IFEND}
+          {$ENDIF}
             ProcessStringBuffer(StrBuffer);
           end;
         If Length(StrBuffer) > 0 then
@@ -1714,7 +2223,6 @@ try
             else
               Add({$IFDEF ESL_LOCAL_Short}TESLStringType{$ENDIF}(StrBuffer));
           end;
-        fSorted := False;
       finally
         BufferFinal(Buffer);
       end;
@@ -1727,16 +2235,32 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function TESLClassType.GetText: TESLPCharType;
+Function TESLClassType.GetText(out Size: TMemSize): TESLPCharType;
 begin
-Result := TESLPCharType(InternalGetText);
+Result := TESLPCharType(InternalGetText(Size));
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Function TESLClassType.GetText: TESLPCharType;
+var
+  Size: TMemSize;
+begin
+Result := TESLPCharType(InternalGetText(Size));
 end;
 
 //------------------------------------------------------------------------------
 
+procedure TESLClassType.SetText(Text: TESLPCharType; Size: TMemSize);
+begin
+InternalSetText(Pointer(Text),Size);
+end;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 procedure TESLClassType.SetText(Text: TESLPCharType);
 begin
-InternalSetText(Pointer(Text));
+InternalSetText(Pointer(Text),StrBufferSize(Pointer(Text)));
 end;
 
 {$ENDIF ESL_ClassImplementation}

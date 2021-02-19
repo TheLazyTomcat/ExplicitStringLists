@@ -18,8 +18,7 @@
   {$IFEND}
 {$ENDIF}
 
-// don't touch following
-
+//- don't touch following ------------------------------------------------------
 
 {$UNDEF ESL_STRINGLIST_OwnsObjects}
 {$UNDEF ESL_STRINGLIST_CaseSensitive}

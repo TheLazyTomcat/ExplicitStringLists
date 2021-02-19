@@ -13,9 +13,15 @@ uses
 
 type
   TESLCharType   = AnsiChar;
-  TESLStringType = ShortString;
+  TESLPCharType  = PAnsiChar;
 
-  TESLPCharType = ^TESLCharType;
+  TESLStringType     = ShortString;
+  TESLPStringType    = PShortString;
+{
+  TESLLongStringType is used where limited length of short strings would pose
+  a problem.
+}
+  TESLLongStringType = AnsiString;
 
 type
   TShortStringList = class; // forward declaration
@@ -28,9 +34,9 @@ type
   TESLSortCompareIndexType  = TESLShortSortCompareIndex;
   TESLSortCompareStringType = TESLShortSortCompareString;
 
-  {$DEFINE ESL_ClassTypes}
-    {$INCLUDE './ExplicitStringLists.inc'}
-  {$UNDEF ESL_ClassTypes}
+{$DEFINE ESL_ClassTypes}
+  {$INCLUDE './ExplicitStringLists.inc'}
+{$UNDEF ESL_ClassTypes}
 
   TShortStringList = class(TExplicitStringList)
   {$DEFINE ESL_ClassDeclaration}
@@ -41,12 +47,11 @@ type
 implementation
 
 uses
-  SysUtils, 
-  StrRect, BinaryStreaming, MemoryBuffer;
+  SysUtils,  
+  StrRect, MemoryBuffer, StaticMemoryStream;
 
 {$DEFINE ESL_ClassImplementation}
   {$INCLUDE './ExplicitStringLists.inc'}
 {$UNDEF ESL_ClassImplementation}
 
 end.
-

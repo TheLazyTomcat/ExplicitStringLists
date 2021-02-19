@@ -22,6 +22,37 @@ type
 
 {===============================================================================
 --------------------------------------------------------------------------------
+                            TESLDelimitedTextParser
+--------------------------------------------------------------------------------
+===============================================================================}
+type
+  TESLDelimitedTextParserState = (dtpsInitial,dtpsWhiteSpace,dtpsDelimiter,
+                                  dtpsNormalText,dtpsQuotedText);
+
+  TESLDelimitedTextParserCharType = (dtpcWhiteSpace,dtpcDelimiter,dtpcQuoteChar,
+                                     dtpcGeneral);
+
+{===============================================================================
+    TESLDelimitedTextParser - class declaration
+===============================================================================}
+type
+  TESLDelimitedTextParserBase = class(TObject)
+  protected
+    // parsing vars
+    fParserState: TESLDelimitedTextParserState;
+    fPosition:    TStrSize;
+    fItemStart:   TStrSize;
+    fItemLength:  TStrSize;
+    procedure Parse; overload; virtual;
+    procedure Parse_Initial; virtual; abstract;
+    procedure Parse_WhiteSpace; virtual; abstract;
+    procedure Parse_Delimiter; virtual; abstract;
+    procedure Parse_NormalText; virtual; abstract;
+    procedure Parse_QuotedText; virtual; abstract;
+  end;
+
+{===============================================================================
+--------------------------------------------------------------------------------
                               TExplicitStringList
 --------------------------------------------------------------------------------
 ===============================================================================}
@@ -92,7 +123,8 @@ type
     procedure Finalize; virtual;
     // auxiliary methods
     Function SortCompare(Idx1,Idx2: Integer): Integer; virtual; abstract;
-    Function GetWriteSize: TMemSize; virtual; abstract; // for preallocations
+    Function GetWriteLength: TStrSize; virtual; abstract; // for preallocations
+    Function GetWriteSize: TMemSize; virtual;
     procedure WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TESLStringEndianness); virtual; abstract;
     procedure WriteLineBreakToStream(Stream: TStream; Endianness: TESLStringEndianness); virtual; abstract;
     procedure WriteBOMToStream(Stream: TStream; Endianness: TESLStringEndianness); virtual; abstract;
@@ -102,8 +134,8 @@ type
     // internal methods
     Function InternalExtract(Index: Integer): TObject; virtual; abstract;
     procedure InternalSort(Reversed: Boolean = False); virtual;
-    Function InternalGetText: Pointer; virtual;
-    procedure InternalSetText(Text: Pointer); virtual;
+    Function InternalGetText(out Size: TMemSize): Pointer; virtual;
+    procedure InternalSetText(Text: Pointer; Size: TMemSize); virtual;
   public
     class Function GetSystemEndianness: TESLStringEndianness; virtual;    // can only return seLittle or seBig, never seSystem
     constructor Create;
@@ -199,6 +231,33 @@ implementation
 
 uses
   StrRect, ListSorters, StaticMemoryStream;
+
+
+{===============================================================================
+--------------------------------------------------------------------------------
+                            TESLDelimitedTextParser
+--------------------------------------------------------------------------------
+===============================================================================}
+{===============================================================================
+    TESLDelimitedTextParser - class implementation
+===============================================================================}
+{-------------------------------------------------------------------------------
+    TESLDelimitedTextParser - protected methods
+-------------------------------------------------------------------------------}
+
+procedure TESLDelimitedTextParserBase.Parse;
+begin
+case fParserState of
+  dtpsInitial:    Parse_Initial;
+  dtpsWhiteSpace: Parse_WhiteSpace;
+  dtpsDelimiter:  Parse_Delimiter;
+  dtpsNormalText: Parse_NormalText;
+  dtpsQuotedText: Parse_QuotedText;
+else
+  raise EESLInvalidValue.CreateFmt('%s.Parse: Invalid parser state (%d).',[Self.ClassName,Ord(fParserState)]);
+end;
+Inc(fPosition);
+end;
 
 {===============================================================================
 --------------------------------------------------------------------------------
@@ -418,6 +477,13 @@ end;
 
 //------------------------------------------------------------------------------
 
+Function TExplicitStringList.GetWriteSize: TMemSize;
+begin
+Result := TMemSize(GetWriteLength) * CharSize;
+end;
+
+//------------------------------------------------------------------------------
+
 class procedure TExplicitStringList.WideSwapEndian(Data: PWideChar; Count: TStrSize);
 var
   i:  Integer;
@@ -457,40 +523,53 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function TExplicitStringList.InternalGetText: Pointer;
+Function TExplicitStringList.InternalGetText(out Size: TMemSize): Pointer;
 var
-  Size: TMemSize;
+  Stream: TWritableStaticMemoryStream;
 begin
-{$message 'implement'}
 Size := GetWriteSize;
 If Size > 0 then
   begin
-    AllocMem(Size + CharSize); // zeroes memory
+    Result := AllocMem(Size + CharSize); // also zeroes memory, CharSize for a terminating zero
+    Stream := TWritableStaticMemoryStream.Create(Result,Size);
+    try
+      Stream.Seek(0,soBeginning);
+      SaveToStream(Stream,False,seSystem);
+    finally
+      Stream.Free;
+    end;
   end
-else Result := nil;
+else
+  begin
+    Result := AllocMem(CharSize);
+    Size := CharSize;
+  end;
 end;
 
 //------------------------------------------------------------------------------
 
-procedure TExplicitStringList.InternalSetText(Text: Pointer);
+procedure TExplicitStringList.InternalSetText(Text: Pointer; Size: TMemSize);
 var
   Stream: TStaticMemoryStream;
 begin
-BeginUpdate;
-try
-  DoListChanging;
-  Clear;
-  Stream := TStaticMemoryStream.Create(Text,StrBufferSize(Text));
-  try
-    Stream.Seek(0,soBeginning);
-    LoadFromStream(Stream);
-  finally
-    Stream.Free;
+If Assigned(Text) and (Size <> 0) then
+  begin
+    BeginUpdate;
+    try
+      DoListChanging;
+      Clear;
+      Stream := TStaticMemoryStream.Create(Text,Size);
+      try
+        Stream.Seek(0,soBeginning);
+        LoadFromStream(Stream);
+      finally
+        Stream.Free;
+      end;
+      DoListChange;
+    finally
+      EndUpdate;
+    end;
   end;
-  DoListChange;
-finally
-  EndUpdate;
-end;
 end;
 
 {-------------------------------------------------------------------------------
