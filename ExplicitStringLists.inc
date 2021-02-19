@@ -363,7 +363,12 @@ end;
 procedure TESLDelimitedTextParser.Parse_Delimiter;
 begin
 case CurrCharType of
-  dtpcWhiteSpace:;// ignore
+  dtpcWhiteSpace: If fStrictDelimiter then
+                    begin
+                      fItemStart := fPosition;
+                      fItemLength := 1;
+                      fParserState := dtpsNormalText;
+                    end;
   dtpcDelimiter:  DoNewString('');
   dtpcQuoteChar:  begin
                     fItemStart := fPosition + 1;
@@ -1069,6 +1074,7 @@ end;
 
 //------------------------------------------------------------------------------
 
+{$IFDEF FPCDWM}{$PUSH}W5024{$ENDIF}
 procedure TESLClassType.WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TESLStringEndianness);
 {$IFDEF ESL_LOCAL_Wide}
 var
@@ -1097,9 +1103,11 @@ If CheckIndex(Index) then
   end
 else raise EESLIndexOutOfBounds.CreateFmt('%s.WriteItemToStream: Index (%d) out of bounds.',[Self.ClassName,Index]);
 end;
+{$IFDEF FPCDWM}{$POP}{$ENDIF}
 
 //------------------------------------------------------------------------------
 
+{$IFDEF FPCDWM}{$PUSH}W5024{$ENDIF}
 procedure TESLClassType.WriteLineBreakToStream(Stream: TStream; Endianness: TESLStringEndianness);
 {$IFDEF ESL_LOCAL_Wide}
 var
@@ -1112,7 +1120,7 @@ If Length(fLineBreak) > 0 then
     Stream.WriteBuffer(fLineBreak[1],Length(fLineBreak) * SizeOf(TESLCharType));
   {$ELSEIF Defined(ESL_LOCAL_Wide)}
     If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
-      begin
+      begin         
         Temp := fLineBreak;
         UniqueString(Temp);
         WideSwapEndian(PWideChar(Temp),Length(Temp));
@@ -1124,9 +1132,11 @@ If Length(fLineBreak) > 0 then
   {$IFEND}  
   end;
 end;
+{$IFDEF FPCDWM}{$POP}{$ENDIF}
 
 //------------------------------------------------------------------------------
 
+{$IFDEF FPCDWM}{$PUSH}W5024{$ENDIF}
 procedure TESLClassType.WriteBOMToStream(Stream: TStream; Endianness: TESLStringEndianness);
 begin
 {$IF Defined(ESL_UTF8)}
@@ -1150,6 +1160,7 @@ else
 end;
 {$IFEND}
 end;
+{$IFDEF FPCDWM}{$POP}{$ENDIF}
 
 //------------------------------------------------------------------------------
 
@@ -2123,7 +2134,9 @@ var
   }
     If Length(StringBuffer) > 0 then
       begin
+      {$IFDEF FPC}
         BreakPosition := 0;
+      {$ENDIF}
         WorkingOffset := 1;
         repeat
           If not IsBreakChar(StringBuffer[WorkingOffset],False) or
