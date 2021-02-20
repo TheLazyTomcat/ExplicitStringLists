@@ -48,7 +48,7 @@ implementation
 
 uses
   SysUtils,  
-  StrRect, MemoryBuffer, StaticMemoryStream;
+  StrRect, BinaryStreaming, MemoryBuffer, StaticMemoryStream;
 
 {$IFDEF FPC_DisableWarns}
   {$DEFINE FPCDWM}
@@ -60,3 +60,4 @@ uses
 {$UNDEF ESL_ClassImplementation}
 
 end.
+

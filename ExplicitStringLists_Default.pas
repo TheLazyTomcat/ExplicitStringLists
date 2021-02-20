@@ -44,10 +44,7 @@ implementation
 
 uses
   SysUtils,
-{$IFDEF ESL_DEFAULT_Unicode}
-  BinaryStreaming,
-{$ENDIF}
-  StrRect, MemoryBuffer, StaticMemoryStream;
+  StrRect, BinaryStreaming, MemoryBuffer, StaticMemoryStream;
 
 {$IFDEF FPC_DisableWarns}
   {$DEFINE FPCDWM}

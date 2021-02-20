@@ -191,6 +191,10 @@ type
     procedure LoadFromStream(Stream: TStream); overload; virtual;
     procedure LoadFromFile(const FileName: String; out Endianness: TESLStringEndianness); overload; virtual;
     procedure LoadFromFile(const FileName: String); overload; virtual;
+    procedure BinarySaveToStream(Stream: TStream); virtual; abstract;
+    procedure BinarySaveToFile(const FileName: String); virtual;
+    procedure BinaryLoadFromStream(Stream: TStream); virtual; abstract;
+    procedure BinaryLoadFromFile(const FileName: String); virtual;
     // list data properties
     property Objects[Index: Integer]: TObject read GetObject write SetObject;
     property DefStrings[Index: Integer]: String read GetDefString write SetDefString;
@@ -230,8 +234,7 @@ type
 implementation
 
 uses
-  StrRect, ListSorters, StaticMemoryStream;
-
+  StrRect, ListSorters, StaticMemoryStream;  
 
 {===============================================================================
 --------------------------------------------------------------------------------
@@ -804,6 +807,7 @@ var
 begin
 FileStream := TFileStream.Create(StrToRTL(FileName),fmCreate or fmShareDenyWrite);
 try
+  FileStream.Seek(0,soBeginning);
   SaveToStream(FileStream,WriteBOM,Endianness);
 finally
   FileStream.Free;
@@ -827,6 +831,7 @@ var
 begin
 FileStream := TFileStream.Create(StrToRTL(FileName),fmOpenRead or fmShareDenyWrite);
 try
+  FileStream.Seek(0,soBeginning);
   LoadFromStream(FileStream,Endianness);
 finally
   FileStream.Free;
@@ -840,6 +845,36 @@ var
   Endianness: TESLStringEndianness;
 begin
 LoadFromFile(FileName,Endianness);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.BinarySaveToFile(const FileName: String);
+var
+  FileStream: TFileStream;
+begin
+FileStream := TFileStream.Create(StrToRTL(FileName),fmCreate or fmShareDenyWrite);
+try
+  FileStream.Seek(0,soBeginning);
+  BinarySaveToStream(FileStream);
+finally
+  FileStream.Free;
+end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TExplicitStringList.BinaryLoadFromFile(const FileName: String);
+var
+  FileStream: TFileStream;
+begin
+FileStream := TFileStream.Create(StrToRTL(FileName),fmOpenRead or fmShareDenyWrite);
+try
+  FileStream.Seek(0,soBeginning);
+  BinaryLoadFromStream(FileStream);
+finally
+  FileStream.Free;
+end;
 end;
 
 end.

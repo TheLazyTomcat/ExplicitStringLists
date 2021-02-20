@@ -141,6 +141,8 @@
     procedure AssignTo(Destination: TStrings); override;
     // streaming methods
     procedure LoadFromStream(Stream: TStream; out Endianness: TESLStringEndianness); override;
+    procedure BinarySaveToStream(Stream: TStream); override;
+    procedure BinaryLoadFromStream(Stream: TStream); override;
     // other methods
     Function GetText(out Size: TMemSize): TESLPCharType; overload; virtual;
     Function GetText: TESLPCharType; overload; virtual;
@@ -2240,6 +2242,65 @@ try
         BufferFinal(Buffer);
       end;
 		end;
+  DoListChange;
+finally
+  EndUpdate;
+end
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.BinarySaveToStream(Stream: TStream);
+var
+  i:  Integer;
+begin
+Stream_WriteInt32(Stream,fCount);
+For i := LowIndex to HighIndex do
+{$IF Defined(ESL_Short)}
+  Stream_WriteShortString(Stream,fItems[i].Str);
+{$ELSEIF Defined(ESL_Ansi)}
+  Stream_WriteAnsiString(Stream,fItems[i].Str);
+{$ELSEIF Defined(ESL_UTF8)}
+  Stream_WriteUTF8String(Stream,fItems[i].Str);
+{$ELSEIF Defined(ESL_Wide)}
+  Stream_WriteWideString(Stream,fItems[i].Str);
+{$ELSEIF Defined(ESL_Unicode)}
+  Stream_WriteUnicodeString(Stream,fItems[i].Str);
+{$ELSEIF Defined(ESL_Default)}
+  Stream_WriteString(Stream,fItems[i].Str);
+{$ELSE}
+  {$MESSAGE FATAL 'Unknown string type.'}
+{$IFEND}
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.BinaryLoadFromStream(Stream: TStream);
+var
+  i:  Integer;
+begin
+BeginUpdate;
+try
+  DoListChanging;
+  Clear;
+  fSorted := False;
+  SetCount(Stream_ReadInt32(Stream));
+  For i := LowIndex to HighIndex do
+  {$IF Defined(ESL_Short)}
+    Stream_ReadShortString(Stream,fItems[i].Str);
+  {$ELSEIF Defined(ESL_Ansi)}
+    Stream_ReadAnsiString(Stream,fItems[i].Str);
+  {$ELSEIF Defined(ESL_UTF8)}
+    Stream_ReadUTF8String(Stream,fItems[i].Str);
+  {$ELSEIF Defined(ESL_Wide)}
+    Stream_ReadWideString(Stream,fItems[i].Str);
+  {$ELSEIF Defined(ESL_Unicode)}
+    Stream_ReadUnicodeString(Stream,fItems[i].Str);
+  {$ELSEIF Defined(ESL_Default)}
+    Stream_ReadString(Stream,fItems[i].Str);
+  {$ELSE}
+    {$MESSAGE FATAL 'Unknown string type.'}
+  {$IFEND}
   DoListChange;
 finally
   EndUpdate;
