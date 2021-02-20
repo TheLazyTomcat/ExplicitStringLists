@@ -1,4 +1,58 @@
+{-------------------------------------------------------------------------------
+
+  This Source Code Form is subject to the terms of the Mozilla Public
+  License, v. 2.0. If a copy of the MPL was not distributed with this
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+-------------------------------------------------------------------------------}
+{===============================================================================
+
+  Explicit string lists - main template
+
+    Implementation template for all explicit string lists and delimited text
+    parsers.
+
+  Version 1.1 (2021-02-20)
+
+  Last change 2021-02-20
+
+  ©2017-2021 František Milt
+
+  Contacts:
+    František Milt: frantisek.milt@gmail.com
+
+  Support:
+    If you find this code useful, please consider supporting its author(s) by
+    making a small donation using the following link(s):
+
+      https://www.paypal.me/FMilt
+
+  Changelog:
+    For detailed changelog and history please refer to this git repository:
+
+      github.com/TheLazyTomcat/ExplicitStringLists
+
+  Dependencies:
+    AuxTypes           - github.com/TheLazyTomcat/Lib.AuxTypes
+    AuxClasses         - github.com/TheLazyTomcat/Lib.AuxClasses
+    StrRect            - github.com/TheLazyTomcat/Lib.StrRect
+    ListSorters        - github.com/TheLazyTomcat/Lib.ListSorters
+    StaticMemoryStream - github.com/TheLazyTomcat/Lib.StaticMemoryStream
+    BinaryStreaming    - github.com/TheLazyTomcat/Lib.BinaryStreaming
+    MemoryBuffer       - github.com/TheLazyTomcat/Lib.MemoryBuffer
+
+===============================================================================}
+
 {$IFDEF ESL_ClassTypes}
+{===============================================================================
+--------------------------------------------------------------------------------
+                                 TESLClassType
+--------------------------------------------------------------------------------
+===============================================================================}
+{===============================================================================
+    TESLClassType - class types
+===============================================================================}
+// do not put "Type" here!
   TESLListItem = record
     Str:      TESLStringType;
     Obj:      TObject;
@@ -6,7 +60,19 @@
   end;
 {$ENDIF ESL_ClassTypes}
 
+{-------------------------------------------------------------------------------
+================================================================================
+-------------------------------------------------------------------------------}
+
 {$IFDEF ESL_ClassDeclaration}
+{===============================================================================
+--------------------------------------------------------------------------------
+                                 TESLClassType
+--------------------------------------------------------------------------------
+===============================================================================}
+{===============================================================================
+    TESLClassType - class declaration
+===============================================================================}
   protected
     fItems:               array of TESLListItem;
     fNameValueSeparator:  TESLCharType;
@@ -175,10 +241,16 @@
     property Text: TESLStringType read GetStrText write SetStrText;
     property DelimitedText: TESLStringType read GetDelimitedText write SetDelimitedText;
     property CommaText: TESLStringType read GetCommaText write SetCommaText;
-
 {$ENDIF ESL_ClassDeclaration}
 
+{-------------------------------------------------------------------------------
+================================================================================
+-------------------------------------------------------------------------------}
+
 {$IFDEF ESL_ClassImplementation}
+{===============================================================================
+    Helper defines
+===============================================================================}
 
 {$IF Defined(ESL_Short) or (Defined(ESL_Default) and Defined(ESL_DEFAULT_Short)))}
   {$DEFINE ESL_LOCAL_Short}
@@ -188,47 +260,17 @@
   {$DEFINE ESL_LOCAL_Wide}
 {$IFEND}
 
-const
-  ESL_DEFVAL_NameValueSeparator = TESLCharType('=');
-  ESL_DEFVAL_Delimiter          = TESLCharType(',');
-  ESL_DEFVAL_LineBreak          = TESLStringType(sLineBreak);
-  ESL_DEFVAL_QuoteChar          = TESLCharType('"');
-
-type
-  TStringsFeaturesChecker = class(Classes.TStrings)
-  protected
-    procedure FeatureChecks; virtual;
-  end;
-  
-type
-  TStringListFeaturesChecker = class(Classes.TStringList)
-  protected
-    procedure FeatureChecks; virtual;
-  end;
-
-procedure TStringsFeaturesChecker.FeatureChecks;
-begin
-{$IF Declared(LineBreak)}         {$DEFINE ESL_STRINGS_LineBreak}         {$IFEND}
-{$IF Declared(TrailingLineBreak)} {$DEFINE ESL_STRINGS_TrailingLineBreak} {$IFEND}
-{$IF Declared(NameValueSeparator)}{$DEFINE ESL_STRINGS_NameValueSeparator}{$IFEND}
-{$IF Declared(Delimiter)}         {$DEFINE ESL_STRINGS_Delimiter}         {$IFEND}
-{$IF Declared(StrictDelimiter)}   {$DEFINE ESL_STRINGS_StrictDelimiter}   {$IFEND}
-{$IF Declared(QuoteChar)}         {$DEFINE ESL_STRINGS_QuoteChar}         {$IFEND}
-raise Exception.Create('TStringsFeaturesChecker.FeatureChecks: This method is not supposed to be called.');
-end;
-
-procedure TStringListFeaturesChecker.FeatureChecks;
-begin
-{$IF Declared(OwnsObjects)}  {$DEFINE ESL_STRINGLIST_OwnsObjects}  {$IFEND}
-{$IF Declared(CaseSensitive)}{$DEFINE ESL_STRINGLIST_CaseSensitive}{$IFEND}
-{$IF Declared(Duplicates)}   {$DEFINE ESL_STRINGLIST_Duplicates}   {$IFEND}
-{$IF Declared(Sorted)}       {$DEFINE ESL_STRINGLIST_Sorted}       {$IFEND}
-raise Exception.Create('TStringListFeaturesChecker.FeatureChecks: This method is not supposed to be called.');
-end;
-
+{===============================================================================
+--------------------------------------------------------------------------------
+                            TESLDelimitedTextParser
+--------------------------------------------------------------------------------
+===============================================================================}
 type
   TESLDelimitedTextParserEvent = procedure(const Str: TESLStringType) of object;
 
+{===============================================================================
+    TESLDelimitedTextParser - class declaration
+===============================================================================}
 type
   TESLDelimitedTextParser = class(TESLDelimitedTextParserBase)
   protected
@@ -254,8 +296,11 @@ type
     property OnNewString: TESLDelimitedTextParserEvent read fOnNewString write fOnNewString;
   end;
 
+{===============================================================================
+    TESLDelimitedTextParser - class implementation
+===============================================================================}
 {-------------------------------------------------------------------------------
-    TESLDelimitedTextParserSpec - protected methods
+    TESLDelimitedTextParser - protected methods
 -------------------------------------------------------------------------------}
 
 Function TESLDelimitedTextParser.RemoveDoubleQuotes(const Str: TESLLongStringType): TESLLongStringType;
@@ -426,7 +471,7 @@ else Inc(fItemLength);
 end;
 
 {-------------------------------------------------------------------------------
-    TESLDelimitedTextParserSpec - public methods
+    TESLDelimitedTextParser - public methods
 -------------------------------------------------------------------------------}
 
 constructor TESLDelimitedTextParser.Create(Delimiter,QuoteChar: TESLCharType; StrictDelimiter: Boolean);
@@ -445,6 +490,69 @@ fParsedString := Text;
 Parse;
 end;
 
+
+{===============================================================================
+--------------------------------------------------------------------------------
+                                 TESLClassType
+--------------------------------------------------------------------------------
+===============================================================================}
+const
+  ESL_DEFVAL_NameValueSeparator = TESLCharType('=');
+  ESL_DEFVAL_Delimiter          = TESLCharType(',');
+  ESL_DEFVAL_LineBreak          = TESLStringType(sLineBreak);
+  ESL_DEFVAL_QuoteChar          = TESLCharType('"');
+
+{===============================================================================
+    TESLClassType - feature checks
+===============================================================================}
+{
+  Following two constructs are here to check what properties are implemented by
+  standard TStrings and TStringList classes and therefore can be used by the
+  lists when assigning (some of the properties were added in newer versions of
+  Delphi, or are not present in FPC).
+}
+
+type
+  TStringsFeaturesChecker = class(Classes.TStrings)
+  protected
+    procedure FeatureChecks; virtual;
+  end;
+
+//------------------------------------------------------------------------------
+  
+procedure TStringsFeaturesChecker.FeatureChecks;
+begin
+{$IF Declared(LineBreak)}         {$DEFINE ESL_STRINGS_LineBreak}         {$IFEND}
+{$IF Declared(TrailingLineBreak)} {$DEFINE ESL_STRINGS_TrailingLineBreak} {$IFEND}
+{$IF Declared(NameValueSeparator)}{$DEFINE ESL_STRINGS_NameValueSeparator}{$IFEND}
+{$IF Declared(Delimiter)}         {$DEFINE ESL_STRINGS_Delimiter}         {$IFEND}
+{$IF Declared(StrictDelimiter)}   {$DEFINE ESL_STRINGS_StrictDelimiter}   {$IFEND}
+{$IF Declared(QuoteChar)}         {$DEFINE ESL_STRINGS_QuoteChar}         {$IFEND}
+raise Exception.Create('TStringsFeaturesChecker.FeatureChecks: This method is not supposed to be called.');
+end;
+
+//==============================================================================
+
+type
+  TStringListFeaturesChecker = class(Classes.TStringList)
+  protected
+    procedure FeatureChecks; virtual;
+  end;
+
+//------------------------------------------------------------------------------
+
+procedure TStringListFeaturesChecker.FeatureChecks;
+begin
+{$IF Declared(OwnsObjects)}  {$DEFINE ESL_STRINGLIST_OwnsObjects}  {$IFEND}
+{$IF Declared(CaseSensitive)}{$DEFINE ESL_STRINGLIST_CaseSensitive}{$IFEND}
+{$IF Declared(Duplicates)}   {$DEFINE ESL_STRINGLIST_Duplicates}   {$IFEND}
+{$IF Declared(Sorted)}       {$DEFINE ESL_STRINGLIST_Sorted}       {$IFEND}
+raise Exception.Create('TStringListFeaturesChecker.FeatureChecks: This method is not supposed to be called.');
+end;
+  
+{===============================================================================
+    TESLClassType - class implementation
+===============================================================================}
 {-------------------------------------------------------------------------------
     TESLClassType - protected methods
 -------------------------------------------------------------------------------}
@@ -2162,7 +2270,7 @@ var
                 end;
             end
           else Break{repeat}
-        until BreakPosition <= 0;
+        until (BreakPosition <= 0) or (WorkingOffset > Length(StringBuffer));
         System.Delete(StringBuffer,1,Pred(WorkingOffset));
       end;
   end;
