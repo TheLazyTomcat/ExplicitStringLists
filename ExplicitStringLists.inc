@@ -56,6 +56,7 @@
   TESLListItem = record
     Str:      TESLStringType;
     Obj:      TObject;
+    UserData: PtrInt;
     Changed:  Boolean;
   end;
 {$ENDIF ESL_ClassTypes}
@@ -88,6 +89,8 @@
     procedure SetString(Index: Integer; const Value: TESLStringType); virtual;
     Function GetObject(Index: Integer): TObject; override;
     procedure SetObject(Index: Integer; Value: TObject); override;
+    Function GetItemUserData(Index: Integer): PtrInt; override;
+    procedure SetItemUserData(Index: Integer; Value: PtrInt); override;
     Function GetChanged(Index: Integer): Boolean; override;
     procedure SetChanged(Index: Integer; Value: Boolean); override;
     Function GetDefString(Index: Integer): String; override;
@@ -135,7 +138,7 @@
     class Function StrBufferSize(Buffer: Pointer): TMemSize; override;
     class Function CharSize: TMemSize; override;
     // internal methods
-    Function InternalExtract(Index: Integer): TObject; override;        
+    Function InternalExtract(Index: Integer): TObject; override;
   public
     // utility methods
     class Function ConvertFromString(const Str: String): TESLStringType; virtual;
@@ -152,7 +155,7 @@
     Function IndexOfName(const Name: TESLStringType): Integer; virtual;
     Function IndexOfValue(const Value: TESLStringType): Integer; virtual;
     Function Find(const Str: TESLStringType; out Index: Integer): Boolean; virtual;
-    Function FindDefString(const Str: String; out Index: Integer): Boolean; override;    
+    Function FindDefString(const Str: String; out Index: Integer): Boolean; override;
     Function FindObject(Obj: TObject; out Index: Integer): Boolean; override;
     Function FindName(const Name: TESLStringType; out Index: Integer): Boolean; virtual;
     Function FindValue(const Value: TESLStringType; out Index: Integer): Boolean; virtual;
@@ -401,7 +404,7 @@ case CurrCharType of
                       fItemStart := fPosition;
                       fItemLength := 1;
                       fParserState := dtpsNormalText;
-                    end;  
+                    end;
 end;
 end;
 
@@ -519,7 +522,7 @@ type
   end;
 
 //------------------------------------------------------------------------------
-  
+
 procedure TStringsFeaturesChecker.FeatureChecks;
 begin
 {$IF Declared(LineBreak)}         {$DEFINE ESL_STRINGS_LineBreak}         {$IFEND}
@@ -549,7 +552,7 @@ begin
 {$IF Declared(Sorted)}       {$DEFINE ESL_STRINGLIST_Sorted}       {$IFEND}
 raise Exception.Create('TStringListFeaturesChecker.FeatureChecks: This method is not supposed to be called.');
 end;
-  
+
 {===============================================================================
     TESLClassType - class implementation
 ===============================================================================}
@@ -611,6 +614,29 @@ If CheckIndex(Index) then
     DoItemChange(Index);
   end
 else raise EESLIndexOutOfBounds.CreateFmt('%s.SetObject: Index (%d) out of bounds.',[Self.ClassName,Index]);
+end;
+
+//------------------------------------------------------------------------------
+
+Function TESLClassType.GetItemUserData(Index: Integer): PtrInt;
+begin
+If CheckIndex(Index) then
+  Result := fItems[Index].UserData
+else
+  raise EESLIndexOutOfBounds.CreateFmt('%s.GetItemUserData: Index (%d) out of bounds.',[Self.ClassName,Index]);
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TESLClassType.SetItemUserData(Index: Integer; Value: PtrInt);
+begin
+If CheckIndex(Index) then
+  begin
+    DoItemChanging(Index);
+    fItems[Index].UserData := Value;
+    DoItemChange(Index);
+  end
+else raise EESLIndexOutOfBounds.CreateFmt('%s.SetItemUserData: Index (%d) out of bounds.',[Self.ClassName,Index]);
 end;
 
 //------------------------------------------------------------------------------
@@ -831,12 +857,12 @@ Function TESLClassType.GetLongDelimitedText: TESLLongStringType;
   Function GetRectifiedString(Index: Integer): TESLLongStringType;
   var
     ii:     TStrSize;
-    ResPos: TStrSize;    
+    ResPos: TStrSize;
     Quoted: Boolean;
   begin
     SetLength(Result,GetRectifiedStringLength(Index));
     ResPos := 1;
-    Quoted := False;    
+    Quoted := False;
     For ii := 1 to Length(fItems[Index].Str) do
       If ResPos <= Length(Result) then
         begin
@@ -895,7 +921,7 @@ For i := LowIndex to HighIndex do
         else
           Break{For i};
         Inc(Len);
-      end;    
+      end;
   end;
 // to be sure...
 If Len < Length(Result) then
@@ -1230,7 +1256,7 @@ If Length(fLineBreak) > 0 then
     Stream.WriteBuffer(fLineBreak[1],Length(fLineBreak) * SizeOf(TESLCharType));
   {$ELSEIF Defined(ESL_LOCAL_Wide)}
     If (Endianness <> seSystem) and (Endianness <> GetSystemEndianness) then
-      begin         
+      begin
         Temp := fLineBreak;
         UniqueString(Temp);
         WideSwapEndian(PWideChar(Temp),Length(Temp));
@@ -1239,7 +1265,7 @@ If Length(fLineBreak) > 0 then
     else Stream.WriteBuffer(TESLPCharType(fLineBreak)^,Length(fLineBreak) * SizeOf(TESLCharType));
   {$ELSE}
     Stream.WriteBuffer(TESLPCharType(fLineBreak)^,Length(fLineBreak) * SizeOf(TESLCharType));
-  {$IFEND}  
+  {$IFEND}
   end;
 end;
 {$IFDEF FPCDWM}{$POP}{$ENDIF}
@@ -1520,7 +1546,7 @@ Function TESLClassType.FindName(const Name: TESLStringType; out Index: Integer):
 begin
 Index := IndexOfName(Name);
 Result := CheckIndex(Index);
-end; 
+end;
 
 //------------------------------------------------------------------------------
 
@@ -1632,7 +1658,7 @@ end;
 procedure TESLClassType.Append(const Str: TESLStringType);
 begin
 AppendObject(Str,nil);
-end;  
+end;
 
 //------------------------------------------------------------------------------
 
@@ -1651,7 +1677,7 @@ end;
 procedure TESLClassType.AppendDefString(const Str: String);
 begin
 AppendDefStringObject(Str,nil);
-end; 
+end;
 
 //------------------------------------------------------------------------------
 
@@ -1872,7 +1898,7 @@ Function TESLClassType.RemoveDefString(const Str: String): Integer;
 begin
 If FindDefString(Str,Result) then
   Delete(Result);
-end; 
+end;
 
 //------------------------------------------------------------------------------
 
@@ -1880,7 +1906,7 @@ Function TESLClassType.RemoveObject(Obj: TObject): Integer;
 begin
 If FindObject(Obj,Result) then
   Delete(Result);
-end; 
+end;
 
 //------------------------------------------------------------------------------
 
@@ -1888,7 +1914,7 @@ Function TESLClassType.RemoveName(const Name: TESLStringType): Integer;
 begin
 If FindName(Name,Result) then
   Delete(Result);
-end; 
+end;
 
 //------------------------------------------------------------------------------
 
@@ -2228,7 +2254,7 @@ var
             Break{For ii};
           end;
     end;
-    
+
   var
     WorkingOffset:  TStrSize;
     BreakPosition:  TStrSize;
@@ -2446,4 +2472,3 @@ InternalSetText(Pointer(Text),StrBufferSize(Pointer(Text)));
 end;
 
 {$ENDIF ESL_ClassImplementation}
-

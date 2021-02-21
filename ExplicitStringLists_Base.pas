@@ -140,6 +140,8 @@ type
     // getters, setters
     Function GetObject(Index: Integer): TObject; virtual; abstract;
     procedure SetObject(Index: Integer; Value: TObject); virtual; abstract;
+    Function GetItemUserData(Index: Integer): PtrInt; virtual; abstract;
+    procedure SetItemUserData(Index: Integer; Value: PtrInt); virtual; abstract;
     Function GetChanged(Index: Integer): Boolean; virtual; abstract;
     procedure SetChanged(Index: Integer; Value: Boolean); virtual; abstract;
     Function GetDefString(Index: Integer): String; virtual; abstract;
@@ -241,6 +243,7 @@ type
     procedure BinaryLoadFromFile(const FileName: String); virtual;
     // list data properties
     property Objects[Index: Integer]: TObject read GetObject write SetObject;
+    property ItemUserData[Index: Integer]: PtrInt read GetItemUserData write SetItemUserData;
     property DefStrings[Index: Integer]: String read GetDefString write SetDefString;
     // updating properties
     property Updating: Boolean read GetUpdating;

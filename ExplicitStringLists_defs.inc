@@ -80,6 +80,7 @@
 {$UNDEF ESL_Wide}
 {$UNDEF ESL_Unicode}
 {$UNDEF ESL_Default}
+{$UNDEF ESL_UCS4}
 
 {$UNDEF ESL_DEFAULT_Short}
 {$UNDEF ESL_DEFAULT_Ansi}
