@@ -19,9 +19,9 @@
     They are meant for situation, where there is a need for storing strings of
     type that differs from default type String in a list, and any implicit or
     explicit conversion is undesirable or impossible.
-    Individual classes are implemented on the same codebase and using template
-    and type aliases. It is not done using generics because of backward
-    compatibility with compilers that does not support them.
+    Individual classes are implemented on the same codebase using template and
+    type aliases. It is not done using generics because of backward
+    compatibility with compilers that do not support generics.
 
     At this moment, lists for the following string types are implemented:
 
@@ -35,12 +35,12 @@
     NOTE - TDefaultStringList is pretty much identical to standard TStringList,
            and can be, to some extent, used as its replacement.
 
-    Note that his unit does not implement anything, it is only forwarding list
+    Note that this unit does not implement anything, it is only forwarding list
     classes that otherwise reside in their own separate units.
 
   Version 1.1 (2021-02-20)
 
-  Last change 2021-02-20
+  Last change 2021-02-24
 
   ©2017-2021 František Milt
 
