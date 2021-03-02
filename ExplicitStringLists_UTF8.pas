@@ -77,6 +77,12 @@ type
   {$INCLUDE './ExplicitStringLists.inc'}
 {$UNDEF ESL_ClassTypes}
 
+  TESLUTF8ItemBinaryIOEvent    = procedure(Sender: TObject; Stream: TStream; var Item: TESLListItem) of Object;
+  TESLUTF8ItemBinaryIOCallback = procedure(Sender: TObject; Stream: TStream; var Item: TESLListItem);
+
+  TESLItemBinaryIOEventType    = TESLUTF8ItemBinaryIOEvent;
+  TESLItemBinaryIOCallbackType = TESLUTF8ItemBinaryIOCallback;
+
   TUTF8StringList = class(TExplicitStringList)
   {$DEFINE ESL_ClassDeclaration}
     {$INCLUDE './ExplicitStringLists.inc'}

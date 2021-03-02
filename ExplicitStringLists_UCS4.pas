@@ -40,6 +40,12 @@ type
   {$INCLUDE './ExplicitStringLists.inc'}
 {$UNDEF ESL_ClassTypes}
 
+  TESLUCS4ItemBinaryIOEvent    = procedure(Sender: TObject; Stream: TStream; var Item: TESLListItem) of Object;
+  TESLUCS4ItemBinaryIOCallback = procedure(Sender: TObject; Stream: TStream; var Item: TESLListItem);
+
+  TESLItemBinaryIOEventType    = TESLUCS4ItemBinaryIOEvent;
+  TESLItemBinaryIOCallbackType = TESLUCS4ItemBinaryIOCallback;
+
   TUCS4StringList = class(TExplicitStringList)
   //{$DEFINE ESL_ClassDeclaration}
   //  {$INCLUDE './ExplicitStringLists.inc'}

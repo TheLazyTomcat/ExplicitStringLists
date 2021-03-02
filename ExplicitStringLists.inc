@@ -79,14 +79,19 @@
     TESLClassType - class declaration
 ===============================================================================}
   protected
-    fItems:               array of TESLListItem;
-    fNameValueSeparator:  TESLCharType;
-    fLineBreak:           TESLStringType;
-    fDelimiter:           TESLCharType;
-    fQuoteChar:           TESLCharType;
+    fItems:                     array of TESLListItem;
+    fNameValueSeparator:        TESLCharType;
+    fLineBreak:                 TESLStringType;
+    fDelimiter:                 TESLCharType;
+    fQuoteChar:                 TESLCharType;
     // custom sorting
-    fCompareFuncIndex:    TESLSortCompareIndexType;
-    fCompareFuncString:   TESLSortCompareStringType;
+    fCompareFuncIndex:          TESLSortCompareIndexType;
+    fCompareFuncString:         TESLSortCompareStringType;
+    // IO events
+    fOnItemBinarySaveCallback:  TESLItemBinaryIOCallbackType;
+    fOnItemBinarySaveEvent:     TESLItemBinaryIOEventType;
+    fOnItemBinaryLoadCallback:  TESLItemBinaryIOCallbackType;
+    fOnItemBinaryLoadEvent:     TESLItemBinaryIOEventType;
     // getters, setters
     Function GetItem(Index: Integer): TESLListItem; virtual;
     Function GetString(Index: Integer): TESLStringType; virtual;
@@ -252,6 +257,13 @@
     property Text: TESLStringType read GetStrText write SetStrText;
     property DelimitedText: TESLStringType read GetDelimitedText write SetDelimitedText;
     property CommaText: TESLStringType read GetCommaText write SetCommaText;
+    // IO events
+    property OnItemBinarySaveCallback: TESLItemBinaryIOCallbackType read fOnItemBinarySaveCallback write fOnItemBinarySaveCallback;
+    property OnItemBinarySaveEvent: TESLItemBinaryIOEventType read fOnItemBinarySaveEvent write fOnItemBinarySaveEvent;
+    property OnItemBinarySave: TESLItemBinaryIOEventType read fOnItemBinarySaveEvent write fOnItemBinarySaveEvent;
+    property OnItemBinaryLoadCallback: TESLItemBinaryIOCallbackType read fOnItemBinaryLoadCallback write fOnItemBinaryLoadCallback;
+    property OnItemBinaryLoadEvent: TESLItemBinaryIOEventType read fOnItemBinaryLoadEvent write fOnItemBinaryLoadEvent;
+    property OnItemBinaryLoad: TESLItemBinaryIOEventType read fOnItemBinaryLoadEvent write fOnItemBinaryLoadEvent;
 {$ENDIF ESL_ClassDeclaration}
 
 {-------------------------------------------------------------------------------
@@ -2528,21 +2540,28 @@ var
 begin
 Stream_WriteInt32(Stream,fCount);
 For i := LowIndex to HighIndex do
-{$IF Defined(ESL_Short)}
-  Stream_WriteShortString(Stream,fItems[i].Str);
-{$ELSEIF Defined(ESL_Ansi)}
-  Stream_WriteAnsiString(Stream,fItems[i].Str);
-{$ELSEIF Defined(ESL_UTF8)}
-  Stream_WriteUTF8String(Stream,fItems[i].Str);
-{$ELSEIF Defined(ESL_Wide)}
-  Stream_WriteWideString(Stream,fItems[i].Str);
-{$ELSEIF Defined(ESL_Unicode)}
-  Stream_WriteUnicodeString(Stream,fItems[i].Str);
-{$ELSEIF Defined(ESL_Default)}
-  Stream_WriteString(Stream,fItems[i].Str);
-{$ELSE}
-  {$MESSAGE FATAL 'Unknown string type.'}
-{$IFEND}
+  begin
+  {$IF Defined(ESL_Short)}
+    Stream_WriteShortString(Stream,fItems[i].Str);
+  {$ELSEIF Defined(ESL_Ansi)}
+    Stream_WriteAnsiString(Stream,fItems[i].Str);
+  {$ELSEIF Defined(ESL_UTF8)}
+    Stream_WriteUTF8String(Stream,fItems[i].Str);
+  {$ELSEIF Defined(ESL_Wide)}
+    Stream_WriteWideString(Stream,fItems[i].Str);
+  {$ELSEIF Defined(ESL_Unicode)}
+    Stream_WriteUnicodeString(Stream,fItems[i].Str);
+  {$ELSEIF Defined(ESL_Default)}
+    Stream_WriteString(Stream,fItems[i].Str);
+  {$ELSE}
+    {$MESSAGE FATAL 'Unknown string type.'}
+  {$IFEND}
+    // user-defined postprocessing
+    If Assigned(fOnItemBinarySaveCallback) then
+      fOnItemBinarySaveCallback(Self,Stream,fItems[i]);
+    If Assigned(fOnItemBinarySaveEvent) then
+      fOnItemBinarySaveEvent(Self,Stream,fItems[i]);
+  end;
 end;
 
 //------------------------------------------------------------------------------
@@ -2558,21 +2577,28 @@ try
   fSorted := False;
   SetCount(Stream_ReadInt32(Stream));
   For i := LowIndex to HighIndex do
-  {$IF Defined(ESL_Short)}
-    Stream_ReadShortString(Stream,fItems[i].Str);
-  {$ELSEIF Defined(ESL_Ansi)}
-    Stream_ReadAnsiString(Stream,fItems[i].Str);
-  {$ELSEIF Defined(ESL_UTF8)}
-    Stream_ReadUTF8String(Stream,fItems[i].Str);
-  {$ELSEIF Defined(ESL_Wide)}
-    Stream_ReadWideString(Stream,fItems[i].Str);
-  {$ELSEIF Defined(ESL_Unicode)}
-    Stream_ReadUnicodeString(Stream,fItems[i].Str);
-  {$ELSEIF Defined(ESL_Default)}
-    Stream_ReadString(Stream,fItems[i].Str);
-  {$ELSE}
-    {$MESSAGE FATAL 'Unknown string type.'}
-  {$IFEND}
+    begin
+    {$IF Defined(ESL_Short)}
+      Stream_ReadShortString(Stream,fItems[i].Str);
+    {$ELSEIF Defined(ESL_Ansi)}
+      Stream_ReadAnsiString(Stream,fItems[i].Str);
+    {$ELSEIF Defined(ESL_UTF8)}
+      Stream_ReadUTF8String(Stream,fItems[i].Str);
+    {$ELSEIF Defined(ESL_Wide)}
+      Stream_ReadWideString(Stream,fItems[i].Str);
+    {$ELSEIF Defined(ESL_Unicode)}
+      Stream_ReadUnicodeString(Stream,fItems[i].Str);
+    {$ELSEIF Defined(ESL_Default)}
+      Stream_ReadString(Stream,fItems[i].Str);
+    {$ELSE}
+      {$MESSAGE FATAL 'Unknown string type.'}
+    {$IFEND}
+      // user-defined postprocessing
+      If Assigned(fOnItemBinaryLoadCallback) then
+        fOnItemBinaryLoadCallback(Self,Stream,fItems[i]);
+      If Assigned(fOnItemBinaryLoadEvent) then
+        fOnItemBinaryLoadEvent(Self,Stream,fItems[i]);
+    end;
   DoListChange;
 finally
   EndUpdate;
