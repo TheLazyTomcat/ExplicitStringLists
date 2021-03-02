@@ -72,6 +72,8 @@
 
 {$UNDEF ESL_ClassTypes}
 {$UNDEF ESL_ClassDeclaration}
+{$UNDEF ESL_ClassAuxiliary}
+{$UNDEF ESL_ClassDelimitedTextParser}
 {$UNDEF ESL_ClassImplementation}
 
 {$UNDEF ESL_Short}

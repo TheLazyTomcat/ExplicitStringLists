@@ -63,6 +63,10 @@
 
 {-------------------------------------------------------------------------------
 ================================================================================
+/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+================================================================================
 -------------------------------------------------------------------------------}
 
 {$IFDEF ESL_ClassDeclaration}
@@ -152,11 +156,13 @@
     Function IndexOf(const Str: TESLStringType): Integer; virtual;
     Function IndexOfDefString(const Str: String): Integer; override;
     Function IndexOfObject(Obj: TObject): Integer; override;
+    Function IndexOfUserData(UserData: PtrInt): Integer; override;
     Function IndexOfName(const Name: TESLStringType): Integer; virtual;
     Function IndexOfValue(const Value: TESLStringType): Integer; virtual;
     Function Find(const Str: TESLStringType; out Index: Integer): Boolean; virtual;
     Function FindDefString(const Str: String; out Index: Integer): Boolean; override;
     Function FindObject(Obj: TObject; out Index: Integer): Boolean; override;
+    Function FindUserData(UserData: PtrInt; out Index: Integer): Boolean; override;
     Function FindName(const Name: TESLStringType; out Index: Integer): Boolean; virtual;
     Function FindValue(const Value: TESLStringType; out Index: Integer): Boolean; virtual;
     Function Add(const Str: TESLStringType): Integer; virtual;
@@ -186,11 +192,13 @@
     Function Extract(const Str: TESLStringType): TObject; virtual;
     Function ExtractDefString(const Str: String): TObject; override;
     Function ExtractObject(Obj: TObject): TObject; override;
+    Function ExtractUserData(UserData: PtrInt): TObject; override;
     Function ExtractName(const Name: TESLStringType): TObject; virtual;
     Function ExtractValue(const Value: TESLStringType): TObject; virtual;
     Function Remove(const Str: TESLStringType): Integer; virtual;
     Function RemoveDefString(const Str: String): Integer; override;
     Function RemoveObject(Obj: TObject): Integer; override;
+    Function RemoveUserData(UserData: PtrInt): Integer; override;
     Function RemoveName(const Name: TESLStringType): Integer; virtual;
     Function RemoveValue(const Value: TESLStringType): Integer; virtual;
     procedure Delete(Index: Integer); override;
@@ -248,9 +256,13 @@
 
 {-------------------------------------------------------------------------------
 ================================================================================
+/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+================================================================================
 -------------------------------------------------------------------------------}
 
-{$IFDEF ESL_ClassImplementation}
+{$IFDEF ESL_ClassAuxiliary}
 {===============================================================================
     Helper defines
 ===============================================================================}
@@ -263,6 +275,127 @@
   {$DEFINE ESL_LOCAL_Wide}
 {$IFEND}
 
+{===============================================================================
+    Auxiliary functions
+===============================================================================}
+
+Function StrLow: TStrSize; {$IFDEF CanInline}inline;{$ENDIF}
+begin
+{$IFDEF ESL_UCS4}
+Result := 0;
+{$ELSE}
+Result := 1;
+{$ENDIF}
+end;
+
+//------------------------------------------------------------------------------
+
+Function StrHigh(const Str: TESLStringType): TStrSize; {$IFDEF CanInline}inline;{$ENDIF}
+begin
+{$IFDEF ESL_UCS4}
+Result := High(Str);
+{$ELSE}
+Result := Length(Str);
+{$ENDIF}
+end;
+
+//------------------------------------------------------------------------------
+
+Function StrAddr(const Str: TESLStringType; Offset: TStrSize = 0): Pointer;
+begin
+{$IFDEF ESL_UCS4}
+If Length(Str) > 1 then
+  begin
+    If Offset <= StrHigh(Str) then
+      Result := Addr(Str[StrLow + Offset])
+    else
+      raise EESLInvalidValue.CreateFmt('StrAddr: Offset (%d) out of bounds.',[Offset]);
+  end
+else raise EESLInvalidValue.Create('StrAddr: Empty string.');
+{$ELSE}         
+If Length(Str) > 0 then
+  begin
+    If Offset < StrHigh(Str) then
+      Result := Addr(Str[StrLow + Offset])
+    else
+      raise EESLInvalidValue.CreateFmt('StrAddr: Offset (%d) out of bounds.',[Offset]);
+  end
+else raise EESLInvalidValue.Create('StrAddr: Empty string.');
+{$ENDIF}
+end;
+
+//------------------------------------------------------------------------------
+
+procedure StrSetLength(var Str: TESLStringType; NewLength: TStrSize); {$IFDEF CanInline}inline;{$ENDIF}
+begin
+{$IFDEF ESL_UCS4}
+// explicit terminating zero
+SetLength(Str,NewLength + 1); 
+Str[High(Str)] := 0;
+{$ELSE}
+SetLength(Str,NewLength);
+{$ENDIF}
+end;
+
+{===============================================================================
+    TStrings/TStringList feature checks
+===============================================================================}
+{
+  Following two constructs are here to check what properties are implemented by
+  standard TStrings and TStringList classes and therefore can be used by the
+  lists when assigning (some of the properties were added in newer versions of
+  Delphi, or are not present in FPC).
+}
+
+type
+  TStringsFeaturesChecker = class(Classes.TStrings)
+  protected
+    procedure FeatureChecks; virtual;
+  end;
+
+//------------------------------------------------------------------------------
+
+procedure TStringsFeaturesChecker.FeatureChecks;
+begin
+{$IF Declared(LineBreak)}         {$DEFINE ESL_STRINGS_LineBreak}         {$IFEND}
+{$IF Declared(TrailingLineBreak)} {$DEFINE ESL_STRINGS_TrailingLineBreak} {$IFEND}
+{$IF Declared(NameValueSeparator)}{$DEFINE ESL_STRINGS_NameValueSeparator}{$IFEND}
+{$IF Declared(Delimiter)}         {$DEFINE ESL_STRINGS_Delimiter}         {$IFEND}
+{$IF Declared(StrictDelimiter)}   {$DEFINE ESL_STRINGS_StrictDelimiter}   {$IFEND}
+{$IF Declared(QuoteChar)}         {$DEFINE ESL_STRINGS_QuoteChar}         {$IFEND}
+raise Exception.Create('TStringsFeaturesChecker.FeatureChecks: This method is not supposed to be called.');
+end;
+
+//==============================================================================
+
+type
+  TStringListFeaturesChecker = class(Classes.TStringList)
+  protected
+    procedure FeatureChecks; virtual;
+  end;
+
+//------------------------------------------------------------------------------
+
+procedure TStringListFeaturesChecker.FeatureChecks;
+begin
+{$IF Declared(OwnsObjects)}  {$DEFINE ESL_STRINGLIST_OwnsObjects}  {$IFEND}
+{$IF Declared(CaseSensitive)}{$DEFINE ESL_STRINGLIST_CaseSensitive}{$IFEND}
+{$IF Declared(Duplicates)}   {$DEFINE ESL_STRINGLIST_Duplicates}   {$IFEND}
+{$IF Declared(Sorted)}       {$DEFINE ESL_STRINGLIST_Sorted}       {$IFEND}
+raise Exception.Create('TStringListFeaturesChecker.FeatureChecks: This method is not supposed to be called.');
+end;
+
+{$ENDIF  ESL_ClassAuxiliary}
+
+{-------------------------------------------------------------------------------
+================================================================================
+/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+================================================================================
+-------------------------------------------------------------------------------}
+
+{$IFDEF ESL_ClassDelimitedTextParser}
 {===============================================================================
 --------------------------------------------------------------------------------
                             TESLDelimitedTextParser
@@ -493,7 +626,17 @@ fParsedString := Text;
 Parse;
 end;
 
+{$ENDIF ESL_ClassDelimitedTextParser}
 
+{-------------------------------------------------------------------------------
+================================================================================
+/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+================================================================================
+-------------------------------------------------------------------------------}
+
+{$IFDEF ESL_ClassImplementation}
 {===============================================================================
 --------------------------------------------------------------------------------
                                  TESLClassType
@@ -504,54 +647,6 @@ const
   ESL_DEFVAL_Delimiter          = TESLCharType(',');
   ESL_DEFVAL_LineBreak          = TESLStringType(sLineBreak);
   ESL_DEFVAL_QuoteChar          = TESLCharType('"');
-
-{===============================================================================
-    TESLClassType - feature checks
-===============================================================================}
-{
-  Following two constructs are here to check what properties are implemented by
-  standard TStrings and TStringList classes and therefore can be used by the
-  lists when assigning (some of the properties were added in newer versions of
-  Delphi, or are not present in FPC).
-}
-
-type
-  TStringsFeaturesChecker = class(Classes.TStrings)
-  protected
-    procedure FeatureChecks; virtual;
-  end;
-
-//------------------------------------------------------------------------------
-
-procedure TStringsFeaturesChecker.FeatureChecks;
-begin
-{$IF Declared(LineBreak)}         {$DEFINE ESL_STRINGS_LineBreak}         {$IFEND}
-{$IF Declared(TrailingLineBreak)} {$DEFINE ESL_STRINGS_TrailingLineBreak} {$IFEND}
-{$IF Declared(NameValueSeparator)}{$DEFINE ESL_STRINGS_NameValueSeparator}{$IFEND}
-{$IF Declared(Delimiter)}         {$DEFINE ESL_STRINGS_Delimiter}         {$IFEND}
-{$IF Declared(StrictDelimiter)}   {$DEFINE ESL_STRINGS_StrictDelimiter}   {$IFEND}
-{$IF Declared(QuoteChar)}         {$DEFINE ESL_STRINGS_QuoteChar}         {$IFEND}
-raise Exception.Create('TStringsFeaturesChecker.FeatureChecks: This method is not supposed to be called.');
-end;
-
-//==============================================================================
-
-type
-  TStringListFeaturesChecker = class(Classes.TStringList)
-  protected
-    procedure FeatureChecks; virtual;
-  end;
-
-//------------------------------------------------------------------------------
-
-procedure TStringListFeaturesChecker.FeatureChecks;
-begin
-{$IF Declared(OwnsObjects)}  {$DEFINE ESL_STRINGLIST_OwnsObjects}  {$IFEND}
-{$IF Declared(CaseSensitive)}{$DEFINE ESL_STRINGLIST_CaseSensitive}{$IFEND}
-{$IF Declared(Duplicates)}   {$DEFINE ESL_STRINGLIST_Duplicates}   {$IFEND}
-{$IF Declared(Sorted)}       {$DEFINE ESL_STRINGLIST_Sorted}       {$IFEND}
-raise Exception.Create('TStringListFeaturesChecker.FeatureChecks: This method is not supposed to be called.');
-end;
 
 {===============================================================================
     TESLClassType - class implementation
@@ -1053,11 +1148,12 @@ end;
 
 procedure TESLClassType.ClearArrayItem(Index: Integer; CanFreeObj: Boolean = True);
 begin
+fItems[Index].Str := '';
 If Assigned(fItems[Index].Obj) and fOwnsObjects and CanFreeObj then
   FreeAndNil(fItems[Index].Obj)
 else
   fItems[Index].Obj := nil;
-fItems[Index].Str := '';
+fItems[Index].UserData := 0;
 fItems[Index].Changed := False;
 end;
 
@@ -1488,6 +1584,21 @@ end;
 
 //------------------------------------------------------------------------------
 
+Function TESLClassType.IndexOfUserData(UserData: PtrInt): Integer;
+var
+  i:  Integer;
+begin
+Result := -1;
+For i := LowIndex to HighIndex do
+  If fItems[i].UserData = UserData then
+    begin
+      Result := i;
+      Break{For i};
+    end;
+end;
+
+//------------------------------------------------------------------------------
+
 Function TESLClassType.IndexOfName(const Name: TESLStringType): Integer;
 var
   i:  Integer;
@@ -1542,6 +1653,14 @@ end;
 
 //------------------------------------------------------------------------------
 
+Function TESLClassType.FindUserData(UserData: PtrInt; out Index: Integer): Boolean;
+begin
+Index := IndexOfUserData(UserData);
+Result := CheckIndex(Index);
+end;
+
+//------------------------------------------------------------------------------
+
 Function TESLClassType.FindName(const Name: TESLStringType; out Index: Integer): Boolean;
 begin
 Index := IndexOfName(Name);
@@ -1589,6 +1708,8 @@ If fSorted then
 else Result := fCount;
 fItems[Result].Str := Str;
 fItems[Result].Obj := Obj;
+fItems[Result].UserData := 0;
+fItems[Result].Changed := False;
 Inc(fCount);
 DoListChange;
 end;
@@ -1625,13 +1746,20 @@ end;
 
 procedure TESLClassType.AddStrings(Strings: TESLClassType);
 var
-  i:  Integer;
+  i:      Integer;
+  Index:  Integer;
 begin
 BeginUpdate;
 try
   Grow(Strings.Count);
   For i := 0 to Pred(Strings.Count) do
-    AddObject(Strings[i],Strings.Objects[i]);
+    begin
+      // note that AddObject can fail without producing an exception
+      Index := AddObject(Strings[i],Strings.Objects[i]);
+      // also copy item user data
+      If CheckIndex(Index) then
+        fItems[Index].UserData := Strings.ItemUserData[i];
+    end;
 finally
   EndUpdate;
 end;
@@ -1872,6 +2000,13 @@ end;
 
 //------------------------------------------------------------------------------
 
+Function TESLClassType.ExtractUserData(UserData: PtrInt): TObject;
+begin
+Result := InternalExtract(IndexOfUserData(UserData));
+end;
+
+//------------------------------------------------------------------------------
+
 Function TESLClassType.ExtractName(const Name: TESLStringType): TObject;
 begin
 Result := InternalExtract(IndexOfName(Name));
@@ -1905,6 +2040,14 @@ end;
 Function TESLClassType.RemoveObject(Obj: TObject): Integer;
 begin
 If FindObject(Obj,Result) then
+  Delete(Result);
+end;
+
+//------------------------------------------------------------------------------
+
+Function TESLClassType.RemoveUserData(UserData: PtrInt): Integer;
+begin
+If FindUserData(UserData,Result) then
   Delete(Result);
 end;
 
@@ -2018,8 +2161,8 @@ try
   SetCount(Strings.Count);
   For i := Strings.LowIndex to Strings.HighIndex do
     begin
-      fItems[i].Str := Strings[i];
-      fItems[i].Obj := Strings.Objects[i];
+      fItems[i] := Strings.Items[i];
+      fItems[i].Changed := False;
     end;
   If fSorted then
     Sort;
@@ -2120,10 +2263,7 @@ try
   // copy data
   SetCount(Source.Count);
   For i := Source.LowIndex to Source.HighIndex do
-    begin
-      fItems[i].Str := Source[i];
-      fItems[i].Obj := Source.Objects[i];
-    end;
+    fItems[i] := Source.Items[i];
   DoListChange;
 finally
   EndUpdate;
@@ -2270,9 +2410,7 @@ var
   }
     If Length(StringBuffer) > 0 then
       begin
-      {$IFDEF FPC}
         BreakPosition := 0;
-      {$ENDIF}
         WorkingOffset := 1;
         repeat
           If not IsBreakChar(StringBuffer[WorkingOffset],False) or

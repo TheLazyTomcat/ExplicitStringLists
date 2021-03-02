@@ -194,8 +194,10 @@ type
     // list items methods
     Function IndexOfDefString(const Str: String): Integer; virtual; abstract;
     Function IndexOfObject(Obj: TObject): Integer; virtual; abstract;
+    Function IndexOfUserData(UserData: PtrInt): Integer; virtual; abstract;
     Function FindDefString(const Str: String; out Index: Integer): Boolean; virtual; abstract;
     Function FindObject(Obj: TObject; out Index: Integer): Boolean; virtual; abstract;
+    Function FindUserData(UserData: PtrInt; out Index: Integer): Boolean; virtual; abstract;
     Function AddDefString(const Str: String): Integer; virtual; abstract;
     Function AddDefStringObject(const Str: String; Obj: TObject): Integer; virtual; abstract;
     procedure AddStrings(Strings: TStrings); overload; virtual;
@@ -212,8 +214,10 @@ type
     procedure Exchange(Idx1,Idx2: Integer); virtual; abstract;
     Function ExtractDefString(const Str: String): TObject; virtual; abstract;
     Function ExtractObject(Obj: TObject): TObject; virtual; abstract;
+    Function ExtractUserData(UserData: PtrInt): TObject; virtual; abstract;
     Function RemoveDefString(const Str: String): Integer; virtual; abstract;
     Function RemoveObject(Obj: TObject): Integer; virtual; abstract;
+    Function RemoveUserData(UserData: PtrInt): Integer; virtual; abstract;
     procedure Delete(Index: Integer); virtual; abstract;
     procedure Clear; virtual;
     // list manipulation methods

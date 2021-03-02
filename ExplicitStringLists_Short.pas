@@ -99,38 +99,20 @@ uses
 {$ENDIF}
 
 {===============================================================================
-    Auxiliary functions
-===============================================================================}
-
-Function StrLow: TStrSize;
-begin
-Result := 1;
-end;
-
-//------------------------------------------------------------------------------
-
-Function StrHigh(const Str: TESLStringType): TStrSize;
-begin
-Result := Length(Str);
-end;
-
-//------------------------------------------------------------------------------
-
-Function StrAddr(const Str: TESLStringType; Offset: TStrSize = 0): Pointer;
-begin
-If Length(Str) > 0 then
-  begin
-    If Offset < Length(Str) then
-      Result := Addr(Str[StrLow + Offset])
-    else
-      raise EESLInvalidValue.CreateFmt('StrAddr: Offset (%d) out of bounds.',[Offset]);
-  end
-else raise EESLInvalidValue.Create('StrAddr: Empty string.');
-end;
-
-{===============================================================================
     Main implementation
 ===============================================================================}
+
+{$DEFINE ESL_ClassAuxiliary}
+  {$INCLUDE './ExplicitStringLists.inc'}
+{$UNDEF ESL_ClassAuxiliary}
+
+//------------------------------------------------------------------------------
+
+{$DEFINE ESL_ClassDelimitedTextParser}
+  {$INCLUDE './ExplicitStringLists.inc'}
+{$UNDEF ESL_ClassDelimitedTextParser}
+
+//------------------------------------------------------------------------------
 
 {$DEFINE ESL_ClassImplementation}
   {$INCLUDE './ExplicitStringLists.inc'}
