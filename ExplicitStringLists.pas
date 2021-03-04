@@ -81,7 +81,8 @@ uses
   ExplicitStringLists_UTF8,
   ExplicitStringLists_Wide,
   ExplicitStringLists_Unicode,
-  ExplicitStringLists_Default;
+  ExplicitStringLists_Default,
+  ExplicitStringLists_UCS4;
 
 {===============================================================================
     Forwarded classes
@@ -102,6 +103,8 @@ type
   TUnicodeStringList = ExplicitStringLists_Unicode.TUnicodeStringList;
 
   TDefaultStringList = ExplicitStringLists_Default.TDefaultStringList;
+
+  TUCS4StringList = ExplicitStringLists_UCS4.TUCS4StringList;
 
 implementation
 

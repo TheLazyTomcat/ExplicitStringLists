@@ -175,6 +175,7 @@ type
     procedure WriteLineBreakToStream(Stream: TStream; Endianness: TESLStringEndianness); virtual; abstract;
     procedure WriteBOMToStream(Stream: TStream; Endianness: TESLStringEndianness); virtual; abstract;
     class procedure WideSwapEndian(Data: PWideChar; Count: TStrSize); virtual;
+    class procedure LongSwapEndian(Data: PUInt32; Count: TStrSize); virtual;
     class Function StrBufferSize(Buffer: Pointer): TMemSize; virtual; abstract;
     class Function CharSize: TMemSize; virtual; abstract;
     // internal methods
@@ -546,6 +547,21 @@ If Count > 0 then
   For i := 0 to Pred(Count) do
     begin
       PUInt16(Data)^ := UInt16(PUInt16(Data)^ shr 8) or UInt16(PUInt16(Data)^ shl 8);
+      Inc(Data);
+    end;
+end;
+
+//------------------------------------------------------------------------------
+
+class procedure TExplicitStringList.LongSwapEndian(Data: PUInt32; Count: TStrSize);
+var
+  i:  Integer;
+begin
+If Count > 0 then
+  For i := 0 to Pred(Count) do
+    begin
+      PUInt32(Data)^ := ((Data^ and $FF000000) shr 24) or ((Data^ and $00FF0000) shr 8) or 
+                        ((Data^ and $0000FF00) shl 8) or ((Data^ and $000000FF) shl 24);
       Inc(Data);
     end;
 end;

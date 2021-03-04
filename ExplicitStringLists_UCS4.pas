@@ -47,9 +47,9 @@ type
   TESLItemBinaryIOCallbackType = TESLUCS4ItemBinaryIOCallback;
 
   TUCS4StringList = class(TExplicitStringList)
-  //{$DEFINE ESL_ClassDeclaration}
-  //  {$INCLUDE './ExplicitStringLists.inc'}
-  //{$UNDEF ESL_ClassDeclaration}
+  {$DEFINE ESL_ClassDeclaration}
+    {$INCLUDE './ExplicitStringLists.inc'}
+  {$UNDEF ESL_ClassDeclaration}
   end;
 
 implementation
@@ -73,15 +73,15 @@ uses
 
 //------------------------------------------------------------------------------
 
-//{$DEFINE ESL_ClassDelimitedTextParser}
-//  {$INCLUDE './ExplicitStringLists.inc'}
-//{$UNDEF ESL_ClassDelimitedTextParser}
+{$DEFINE ESL_ClassDelimitedTextParser}
+  {$INCLUDE './ExplicitStringLists.inc'}
+{$UNDEF ESL_ClassDelimitedTextParser}
 
 //------------------------------------------------------------------------------
 
-//{$DEFINE ESL_ClassImplementation}
-//  {$INCLUDE './ExplicitStringLists.inc'}
-//{$UNDEF ESL_ClassImplementation}
+{$DEFINE ESL_ClassImplementation}
+  {$INCLUDE './ExplicitStringLists.inc'}
+{$UNDEF ESL_ClassImplementation}
 
 end.
 
