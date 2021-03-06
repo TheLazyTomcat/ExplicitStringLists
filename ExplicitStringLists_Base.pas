@@ -12,9 +12,9 @@
     Base classes and types for all lists and utility classes (eg. delimited
     text parser).
 
-  Version 1.1 (2021-02-20)
+  Version 1.1.1 (2021-03-06)
 
-  Last change 2021-02-20
+  Last change 2021-03-06
 
   ©2017-2021 František Milt
 
@@ -171,16 +171,16 @@ type
     procedure Initialize; virtual;
     procedure Finalize; virtual;
     // auxiliary methods
+    class procedure WideSwapEndian(Data: PUInt16; Count: TStrSize); virtual;
+    class procedure LongSwapEndian(Data: PUInt32; Count: TStrSize); virtual;
+    class Function StrBufferSize(Buffer: Pointer): TMemSize; virtual; abstract;
+    class Function CharSize: TMemSize; virtual; abstract;
     Function SortCompare(Idx1,Idx2: Integer): Integer; virtual; abstract;
     Function GetWriteLength: TStrSize; virtual; abstract; // for preallocations
     Function GetWriteSize: TMemSize; virtual;
     procedure WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TESLStringEndianness); virtual; abstract;
     procedure WriteLineBreakToStream(Stream: TStream; Endianness: TESLStringEndianness); virtual; abstract;
     procedure WriteBOMToStream(Stream: TStream; Endianness: TESLStringEndianness); virtual; abstract;
-    class procedure WideSwapEndian(Data: PUInt16; Count: TStrSize); virtual;
-    class procedure LongSwapEndian(Data: PUInt32; Count: TStrSize); virtual;
-    class Function StrBufferSize(Buffer: Pointer): TMemSize; virtual; abstract;
-    class Function CharSize: TMemSize; virtual; abstract;
     // internal methods
     Function InternalExtract(Index: Integer): TObject; virtual; abstract;
     procedure InternalSort(Reversed: Boolean = False); virtual;
@@ -236,7 +236,7 @@ type
     // streaming methods
   {
     BOM is written only for UTF8, Wide, Unicode and UCS4Strings.
-    Endiannes affects only Wide- and UnicodeStrings, it has no meaning for
+    Endiannes affects only Wide, Unicode and UCS4Strings, it has no meaning for
     single-byte-character strings.
   }
     procedure SaveToStream(Stream: TStream; WriteBOM: Boolean = True; Endianness: TESLStringEndianness = seSystem); virtual;
@@ -540,14 +540,6 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function TExplicitStringList.GetWriteSize: TMemSize;
-begin
-// GetWriteLength should newer return a negative value
-Result := TMemSize(GetWriteLength) * CharSize;
-end;
-
-//------------------------------------------------------------------------------
-
 class procedure TExplicitStringList.WideSwapEndian(Data: PUInt16; Count: TStrSize);
 var
   i:  TStrSize;
@@ -573,6 +565,14 @@ If Count > 0 then
                         ((Data^ and $0000FF00) shl 8) or ((Data^ and $000000FF) shl 24);
       Inc(Data);
     end;
+end;
+
+//------------------------------------------------------------------------------
+
+Function TExplicitStringList.GetWriteSize: TMemSize;
+begin
+// GetWriteLength should newer return a negative value
+Result := TMemSize(GetWriteLength) * CharSize;
 end;
 
 //------------------------------------------------------------------------------

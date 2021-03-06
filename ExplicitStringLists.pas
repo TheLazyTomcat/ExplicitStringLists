@@ -31,16 +31,20 @@
       WideString    - TWideStringList in ExplicitStringLists_Wide.pas
       UnicodeString - TUnicodeStringList in ExplicitStringLists_Unicode.pas
       String        - TDefaultStringList in ExplicitStringLists_Default.pas
+      UCS4String    - TUCS4StringList in ExplicitStringLists_UCS4.pas
 
     NOTE - TDefaultStringList is pretty much identical to standard TStringList,
            and can be, to some extent, used as its replacement.
 
     Note that this unit does not implement anything, it is only forwarding list
     classes that otherwise reside in their own separate units.
+    Also, some other types that might be needed, eg. enumerated types or
+    records, are declared in ExplicitStringLists_Base or in respective units
+    for each class.
 
-  Version 1.1 (2021-02-20)
+  Version 1.1.1 (2021-03-06)
 
-  Last change 2021-02-24
+  Last change 2021-03-06
 
   ©2017-2021 František Milt
 

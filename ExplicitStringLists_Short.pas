@@ -11,9 +11,9 @@
 
     Implementation of list of short strings.
 
-  Version 1.1 (2021-02-20)
+  Version 1.1.1 (2021-03-06)
 
-  Last change 2021-02-20
+  Last change 2021-03-06
 
   ©2017-2021 František Milt
 
@@ -55,11 +55,11 @@ uses
 {$DEFINE ESL_Short}
 
 type
-  TESLCharType   = AnsiChar;
-  TESLPCharType  = PAnsiChar;
+  TESLCharType  = AnsiChar;
+  TESLPCharType = PAnsiChar;
 
-  TESLStringType     = ShortString;
-  TESLPStringType    = PShortString;
+  TESLStringType  = ShortString;
+  TESLPStringType = PShortString;
 {
   TESLLongStringType is used where limited length of short strings would pose
   a problem.

@@ -11,9 +11,9 @@
 
     Implementation of list of (default) strings.
 
-  Version 1.1 (2021-02-20)
+  Version 1.1.1 (2021-03-06)
 
-  Last change 2021-02-20
+  Last change 2021-03-06
 
   ©2017-2021 František Milt
 
@@ -55,11 +55,12 @@ uses
 {$DEFINE ESL_Default}
 
 type
-  TESLCharType   = Char;
-  TESLPCharType  = PChar;
+  TESLCharType  = Char;
+  TESLPCharType = PChar;
 
-  TESLStringType     = String;
-  TESLPStringType    = PString;
+  TESLStringType  = String;
+  TESLPStringType = PString;
+
   TESLLongStringType = String;
 
 type

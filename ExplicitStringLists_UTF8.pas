@@ -11,9 +11,9 @@
 
     Implementation of list of UTF-8 strings.
 
-  Version 1.1 (2021-02-20)
+  Version 1.1.1 (2021-03-06)
 
-  Last change 2021-02-20
+  Last change 2021-03-06
 
   ©2017-2021 František Milt
 
@@ -58,8 +58,9 @@ type
   TESLCharType   = UTF8Char;
   TESLPCharType  = PUTF8Char;
 
-  TESLStringType     = UTF8String;
-  TESLPStringType    = PUTF8String;
+  TESLStringType  = UTF8String;
+  TESLPStringType = PUTF8String;
+
   TESLLongStringType = UTF8String;
 
 type

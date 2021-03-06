@@ -12,9 +12,9 @@
     Implementation template for all explicit string lists and delimited text
     parsers.
 
-  Version 1.1 (2021-02-20)
+  Version 1.1.1 (2021-03-06)
 
-  Last change 2021-02-20
+  Last change 2021-03-06
 
   ©2017-2021 František Milt
 
@@ -135,6 +135,8 @@
     // auxiliary methods
     class Function IsBreakChar(C: TESLCharType; IncludeZero: Boolean = True): Boolean; virtual;
     class Function PosOfChar(const Str: TESLStringType; C: TESLCharType): TStrSize; virtual;
+    class Function StrBufferSize(Buffer: Pointer): TMemSize; override;
+    class Function CharSize: TMemSize; override;
     Function ExtractNameStr(const Str: TESLStringType): TESLStringType; virtual;
     Function ExtractValueStr(const Str: TESLStringType): TESLStringType; virtual;
     Function ExtractNameAndValueStr(const Str: TESLStringType; out Name,Value: TESLStringType): Boolean; virtual;
@@ -145,8 +147,6 @@
     procedure WriteItemToStream(Stream: TStream; Index: Integer; Endianness: TESLStringEndianness); override;
     procedure WriteLineBreakToStream(Stream: TStream; Endianness: TESLStringEndianness); override;
     procedure WriteBOMToStream(Stream: TStream; Endianness: TESLStringEndianness); override;
-    class Function StrBufferSize(Buffer: Pointer): TMemSize; override;
-    class Function CharSize: TMemSize; override;
     // internal methods
     Function InternalExtract(Index: Integer): TObject; override;
   public
@@ -1441,6 +1441,36 @@ end;
 
 //------------------------------------------------------------------------------
 
+class Function TESLClassType.StrBufferSize(Buffer: Pointer): TMemSize;
+var
+  CharBuff: TESLPCharType;
+begin
+{
+  there are absolutely no checks, this function simply reads memory until zero
+  is encountered or something bad happens :P
+}
+Result := 0;
+If Assigned(Buffer) then
+  begin
+    CharBuff := TESLPCharType(Buffer);
+    while Ord(CharBuff^) <> 0 do
+      begin
+        Inc(Result);
+        Inc(CharBuff);
+      end
+  end;
+Result := Result * SizeOf(TESLCharType);
+end;
+
+//------------------------------------------------------------------------------
+
+class Function TESLClassType.CharSize: TMemSize;
+begin
+Result := SizeOf(TESLCharType);
+end;
+
+//------------------------------------------------------------------------------
+
 Function TESLClassType.ExtractNameStr(const Str: TESLStringType): TESLStringType;
 var
   SeparatorPos: TStrSize;
@@ -1675,36 +1705,6 @@ end;
 {$IFEND}
 end;
 {$IFDEF FPCDWM}{$POP}{$ENDIF}
-
-//------------------------------------------------------------------------------
-
-class Function TESLClassType.StrBufferSize(Buffer: Pointer): TMemSize;
-var
-  CharBuff: TESLPCharType;
-begin
-{
-  there are absolutely no checks, this function simply reads memory until zero
-  is encountered or something bad happens :P
-}
-Result := 0;
-If Assigned(Buffer) then
-  begin
-    CharBuff := TESLPCharType(Buffer);
-    while Ord(CharBuff^) <> 0 do
-      begin
-        Inc(Result);
-        Inc(CharBuff);
-      end
-  end;
-Result := Result * SizeOf(TESLCharType);
-end;
-
-//------------------------------------------------------------------------------
-
-class Function TESLClassType.CharSize: TMemSize;
-begin
-Result := SizeOf(TESLCharType);
-end;
 
 //------------------------------------------------------------------------------
 
