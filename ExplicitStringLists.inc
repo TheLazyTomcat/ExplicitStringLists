@@ -358,7 +358,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure ESL_StrSetLength(var Str: TESLStringType; NewLength: TStrSize); {$IFDEF CanInline}inline;{$ENDIF}
+procedure ESL_StrSetLength(var Str: TESLStringType; NewLength: TStrSize); {$IF Defined(CanInline) and Defined(FPC)}inline;{$IFEND}
 begin
 {$IFDEF ESL_UCS4}
 // explicit terminating zero
@@ -2724,7 +2724,16 @@ var
   }
     If ESL_LStrLength(StringBuffer) > 0 then
       begin
+      {$IF not Defined(FPC) and (CompilerVersion <= 15)}
+      {
+        Following assignment is technically not needed, but some compilers are
+        a little dumb...
+        Here, it is implemented only for Delphi 7 or older, but I have no idea
+        when this (BreakPosition being not initialized) really stopped to be
+        reported as a problem.
+      }
         BreakPosition := Pred(ESL_LStrLow);
+      {$IFEND}
         WorkingOffset := ESL_LStrLow;
         repeat
           If not IsBreakChar(StringBuffer[WorkingOffset],False) or
@@ -2747,7 +2756,7 @@ var
                   WorkingOffset := Succ(BreakPosition);
                 end;
             end
-          else Break{repeat}
+          else Break{repeat};
         until (BreakPosition < ESL_LStrLow) or (WorkingOffset > ESL_LStrHigh(StringBuffer));
       {$IFDEF ESL_UCS4}
         StringBuffer := ESL_LStrCopy(StringBuffer,WorkingOffset,ESL_LStrLength(StringBuffer) - WorkingOffset);
