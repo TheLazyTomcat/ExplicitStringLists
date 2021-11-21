@@ -11,9 +11,9 @@
 
     Implementation of list of UCS4 strings.
 
-  Version 1.1.1 (2021-03-06)
+  Version 1.1.2 (2021-11-22)
 
-  Last change 2021-03-06
+  Last change 2021-11-22
 
   ©2017-2021 František Milt
 
@@ -109,6 +109,10 @@ uses
 {===============================================================================
     Main implementation
 ===============================================================================}
+const
+  ESL_IMPLSTR_NAME = 'ucs4';
+
+//------------------------------------------------------------------------------
 
 {$DEFINE ESL_ClassAuxiliary}
   {$INCLUDE './ExplicitStringLists.inc'}

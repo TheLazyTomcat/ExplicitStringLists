@@ -12,9 +12,9 @@
     Implementation template for all explicit string lists and delimited text
     parsers.
 
-  Version 1.1.1 (2021-03-06)
+  Version 1.1.2 (2021-11-22)
 
-  Last change 2021-03-06
+  Last change 2021-11-22
 
   ©2017-2021 František Milt
 
@@ -416,9 +416,9 @@ If ESL_StrLength(Str) > 0 then
     If (ESL_StrLow + Offset) <= ESL_StrHigh(Str) then
       Result := Addr(Str[ESL_StrLow + Offset])
     else
-      raise EESLInvalidValue.CreateFmt('StrAddr: Offset (%d) out of bounds.',[Offset]);
+      raise EESLInvalidValue.CreateFmt('ESL_StrAddr(%s): Offset (%d) out of bounds.',[ESL_IMPLSTR_NAME,Offset]);
   end
-else raise EESLInvalidValue.Create('StrAddr: Empty string.');
+else raise EESLInvalidValue.CreateFmt('ESL_StrAddr(%s): Empty string.',[ESL_IMPLSTR_NAME]);
 end;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -430,9 +430,9 @@ If ESL_LStrLength(Str) > 0 then
     If (ESL_LStrLow + Offset) <= ESL_LStrHigh(Str) then
       Result := Addr(Str[ESL_LStrLow + Offset])
     else
-      raise EESLInvalidValue.CreateFmt('LStrAddr: Offset (%d) out of bounds.',[Offset]);
+      raise EESLInvalidValue.CreateFmt('ESL_LStrAddr(%s): Offset (%d) out of bounds.',[ESL_IMPLSTR_NAME,Offset]);
   end
-else raise EESLInvalidValue.Create('LStrAddr: Empty string.');
+else raise EESLInvalidValue.CreateFmt('ESL_LStrAddr(%s): Empty string.',[ESL_IMPLSTR_NAME]);
 end;
 
 //------------------------------------------------------------------------------
@@ -2696,9 +2696,9 @@ var
 
   procedure ProcessStringBuffer(var StringBuffer: TESLLongStringType);
 
-    Function BreakPos(const Str: TESLLongStringType; StartFrom: Integer): Integer;
+    Function BreakPos(const Str: TESLLongStringType; StartFrom: Integer): TStrSize;
     var
-      ii: Integer;
+      ii: TStrSize;
     begin
       Result := Pred(ESL_LStrLow);
       For ii := StartFrom to ESL_LStrHigh(Str) do
@@ -2714,13 +2714,13 @@ var
     BreakPosition:  TStrSize;
   begin
   {
-    folloving are all recognized linebreak sequences:
+    Recognized linebreak characters or character sequences:
 
+      #0
       #10#13
       #13#10
-      #10 not followed by #13 or #0
-      #13 not followed by #10 or #0
-      #0 not followed by #10 or #13
+      #10 not followed by #13
+      #13 not followed by #10  
   }
     If ESL_LStrLength(StringBuffer) > 0 then
       begin
@@ -2736,24 +2736,56 @@ var
       {$IFEND}
         WorkingOffset := ESL_LStrLow;
         repeat
+        {
+          If there is a break char other than zero at the last position in
+          the string buffer, we have to terminate the cycle and exit (the break
+          might span buffer boundary and continue in the next call).
+        }
           If not IsBreakChar(StringBuffer[WorkingOffset],False) or
             (WorkingOffset < ESL_LStrHigh(StringBuffer)) then
             begin
+            {
+              We are NOT at the end with #10 or #13 left.
+
+              Search for next occurence of breaking character.
+
+              If none is found, then BreakPosition is equal to Pred(ESL_LStrLow)
+              and the cycle ends.
+            }
               BreakPosition := BreakPos(StringBuffer,WorkingOffset);
               If BreakPosition >= ESL_LStrLow then
                 begin
-                  If BreakPosition > WorkingOffset then
-                    Add({$IFDEF ESL_LOCAL_Short}TESLStringType{$ENDIF}(ESL_LStrCopy(StringBuffer,WorkingOffset,BreakPosition - WorkingOffset)))
-                  else
-                    Add(ESL_StrEmpty);
-                  If BreakPosition < ESL_LStrHigh(StringBuffer) then
+                  // a break char was found...
+                  If (BreakPosition < ESL_LStrHigh(StringBuffer)) or
+                    (Ord(StringBuffer[BreakPosition]) = 0) then
                     begin
-                      If (StringBuffer[BreakPosition] <> StringBuffer[Succ(BreakPosition)]) and
-                         IsBreakChar(StringBuffer[Succ(BreakPosition)],False) and
-                         (Ord(StringBuffer[BreakPosition]) <> 0) then
-                        Inc(BreakPosition);
-                    end;
-                  WorkingOffset := Succ(BreakPosition);
+                    {
+                      Break char could be anywhere, but is NOT both equal to
+                      zero and at the and.
+
+                      If it is after above working offset, then add everything
+                      between them as a new item. Otherwise add empty item.
+                    }
+                      If BreakPosition > WorkingOffset then
+                        Add({$IFDEF ESL_LOCAL_Short}TESLStringType{$ENDIF}(ESL_LStrCopy(StringBuffer,WorkingOffset,BreakPosition - WorkingOffset)))
+                      else
+                        Add(ESL_StrEmpty);
+                      // check for two-character breaks
+                      If BreakPosition < ESL_LStrHigh(StringBuffer) then
+                        begin
+                          If (StringBuffer[BreakPosition] <> StringBuffer[Succ(BreakPosition)]) and
+                             IsBreakChar(StringBuffer[Succ(BreakPosition)],False) and
+                             (Ord(StringBuffer[BreakPosition]) <> 0) then
+                            Inc(BreakPosition);
+                        end;
+                      WorkingOffset := Succ(BreakPosition);
+                    end
+                  {
+                    Next break char was found at the end of string buffer and
+                    is not zero. It might continue across buffer boundary, so
+                    leave everything as is and exit.
+                  }                    
+                  else Break{repeat};
                 end;
             end
           else Break{repeat};

@@ -12,9 +12,9 @@
     Base classes and types for all lists and utility classes (eg. delimited
     text parser).
 
-  Version 1.1.1 (2021-03-06)
+  Version 1.1.2 (2021-11-22)
 
-  Last change 2021-03-06
+  Last change 2021-11-22
 
   ©2017-2021 František Milt
 
@@ -315,7 +315,7 @@ case fParserState of
   dtpsNormalText: Parse_NormalText;
   dtpsQuotedText: Parse_QuotedText;
 else
-  raise EESLInvalidValue.CreateFmt('%s.Parse: Invalid parser state (%d).',[Self.ClassName,Ord(fParserState)]);
+  raise EESLInvalidValue.CreateFmt('TESLDelimitedTextParserBase.Parse: Invalid parser state (%d).',[Ord(fParserState)]);
 end;
 Inc(fPosition);
 end;
@@ -781,7 +781,7 @@ If not fSorted or not fStrictSorted then
     fSorted := False;
     AddDefStrings(Strings);
   end
-else raise EESLSortedList.CreateFmt('%s.AppendDefStrings: Cannot append to sorted list.',[Self.ClassName]);
+else raise EESLSortedList.Create('TExplicitStringList.AppendDefStrings: Cannot append to sorted list.');
 end;
 
 //------------------------------------------------------------------------------
@@ -793,7 +793,7 @@ If not fSorted or not fStrictSorted then
     fSorted := False;
     AddDefStrings(Strings);
   end
-else raise EESLSortedList.CreateFmt('%s.AppendDefStrings: Cannot append to sorted list.',[Self.ClassName]);
+else raise EESLSortedList.Create('TExplicitStringList.AppendDefStrings: Cannot append to sorted list.');
 end;
 
 //------------------------------------------------------------------------------
@@ -838,7 +838,7 @@ If not fSorted or not fStrictSorted then
         end;
       end;
   end
-else raise EESLSortedList.CreateFmt('%s.Reverse: Cannot reverse sorted list.',[Self.ClassName]);
+else raise EESLSortedList.Create('TExplicitStringList.Reverse: Cannot reverse sorted list.');
 end;
 
 //------------------------------------------------------------------------------
