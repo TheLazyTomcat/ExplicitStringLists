@@ -14,9 +14,9 @@
 
   Version 1.1.2 (2021-11-22)
 
-  Last change 2021-11-22
+  Last change 2022-09-14
 
-  ©2017-2021 František Milt
+  ©2017-2022 František Milt
 
   Contacts:
     František Milt: frantisek.milt@gmail.com
@@ -428,8 +428,8 @@ begin
 If CallChanging then
   DoChanging;
 If Assigned(fOnItemChangingCallback) then
-  fOnItemChangingCallback(Self,Index);
-If Assigned(fOnItemChangingEvent) then
+  fOnItemChangingCallback(Self,Index)
+else If Assigned(fOnItemChangingEvent) then
   fOnItemChangingEvent(Self,Index);
 end;
 
@@ -441,8 +441,8 @@ SetChanged(Index,True);
 If fUpdateCount <= 0 then
   begin
     If Assigned(fOnItemChangeCallback) then
-      fOnItemChangeCallback(Self,Index);
-    If Assigned(fOnItemChangeEvent) then
+      fOnItemChangeCallback(Self,Index)
+    else If Assigned(fOnItemChangeEvent) then
       fOnItemChangeEvent(Self,Index);
   end;
 If CallChange then
@@ -456,8 +456,8 @@ begin
 If CallChanging then
   DoChanging;
 If Assigned(fOnListChangingCallback) then
-  fOnListChangingCallback(Self);
-If Assigned(fOnListChangingEvent) then
+  fOnListChangingCallback(Self)
+else If Assigned(fOnListChangingEvent) then
   fOnListChangingEvent(Self);
 end;
 
@@ -469,8 +469,8 @@ fListChanged := True;
 If fUpdateCount <= 0 then
   begin
     If Assigned(fOnListChangeCallback) then
-      fOnListChangeCallback(Self);
-    If Assigned(fOnListChangeEvent) then
+      fOnListChangeCallback(Self)
+    else If Assigned(fOnListChangeEvent) then
       fOnListChangeEvent(Self);
   end;
 If CallChange then
@@ -482,8 +482,8 @@ end;
 procedure TExplicitStringList.DoChanging;
 begin
 If Assigned(fOnChangingCallback) then
-  fOnChangingCallback(Self);
-If Assigned(fOnChangingEvent) then
+  fOnChangingCallback(Self)
+else If Assigned(fOnChangingEvent) then
   fOnChangingEvent(Self);
 end;
 
@@ -494,8 +494,8 @@ begin
 If fUpdateCount <= 0 then
   begin
     If Assigned(fOnChangeCallback) then
-      fOnChangeCallback(Self);
-    If Assigned(fOnChangeEvent) then
+      fOnChangeCallback(Self)
+    else If Assigned(fOnChangeEvent) then
       fOnChangeEvent(Self);
   end;
 end;

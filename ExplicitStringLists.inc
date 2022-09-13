@@ -14,9 +14,9 @@
 
   Version 1.1.2 (2021-11-22)
 
-  Last change 2021-11-22
+  Last change 2022-09-14
 
-  ©2017-2021 František Milt
+  ©2017-2022 František Milt
 
   Contacts:
     František Milt: frantisek.milt@gmail.com
@@ -2928,8 +2928,8 @@ For i := LowIndex to HighIndex do
   {$IFEND}
     // user-defined postprocessing
     If Assigned(fOnItemBinarySaveCallback) then
-      fOnItemBinarySaveCallback(Self,Stream,fItems[i]);
-    If Assigned(fOnItemBinarySaveEvent) then
+      fOnItemBinarySaveCallback(Self,Stream,fItems[i])
+    else If Assigned(fOnItemBinarySaveEvent) then
       fOnItemBinarySaveEvent(Self,Stream,fItems[i]);
   end;
 end;
@@ -2967,8 +2967,8 @@ try
     {$IFEND}
       // user-defined postprocessing
       If Assigned(fOnItemBinaryLoadCallback) then
-        fOnItemBinaryLoadCallback(Self,Stream,fItems[i]);
-      If Assigned(fOnItemBinaryLoadEvent) then
+        fOnItemBinaryLoadCallback(Self,Stream,fItems[i])
+      else If Assigned(fOnItemBinaryLoadEvent) then
         fOnItemBinaryLoadEvent(Self,Stream,fItems[i]);
     end;
   DoListChange;
