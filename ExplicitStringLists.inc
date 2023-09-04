@@ -14,9 +14,9 @@
 
   Version 1.1.2 (2021-11-22)
 
-  Last change 2022-09-14
+  Last change 2023-09-04
 
-  ©2017-2022 František Milt
+  ©2017-2023 František Milt
 
   Contacts:
     František Milt: frantisek.milt@gmail.com
@@ -2945,7 +2945,7 @@ try
   DoListChanging;
   Clear;
   fSorted := False;
-  SetCount(Stream_ReadInt32(Stream));
+  SetCount(Stream_GetInt32(Stream));
   For i := LowIndex to HighIndex do
     begin
     {$IF Defined(ESL_Short)}
