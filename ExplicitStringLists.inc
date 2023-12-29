@@ -14,7 +14,7 @@
 
   Version 1.1.2 (2021-11-22)
 
-  Last change 2023-09-04
+  Last change 2023-12-29
 
   ©2017-2023 František Milt
 
@@ -387,9 +387,11 @@ procedure ESL_StrInit(out Str: TESLStringType; NewLength: TStrSize); {$IFDEF Can
 begin
 {$IFDEF ESL_UCS4}
 // explicit terminating zero
+Str := nil;
 SetLength(Str,NewLength + 1);
 Str[High(Str)] := 0;
 {$ELSE}
+Str := '';
 SetLength(Str,NewLength);
 {$ENDIF}
 end;
@@ -399,9 +401,11 @@ end;
 procedure ESL_LStrInit(out Str: TESLLongStringType; NewLength: TStrSize); {$IFDEF CanInline}inline;{$ENDIF}
 begin
 {$IFDEF ESL_UCS4}
+Str := nil;
 SetLength(Str,NewLength + 1);
 Str[High(Str)] := 0;
 {$ELSE}
+Str := '';
 SetLength(Str,NewLength);
 {$ENDIF}
 end;
