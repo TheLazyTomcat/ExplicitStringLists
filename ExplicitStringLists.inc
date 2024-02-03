@@ -14,9 +14,9 @@
 
   Version 1.1.2 (2021-11-22)
 
-  Last change 2023-12-29
+  Last change 2024-02-03
 
-  ©2017-2023 František Milt
+  ©2017-2024 František Milt
 
   Contacts:
     František Milt: frantisek.milt@gmail.com
@@ -33,13 +33,15 @@
       github.com/TheLazyTomcat/ExplicitStringLists
 
   Dependencies:
-    AuxTypes           - github.com/TheLazyTomcat/Lib.AuxTypes
-    AuxClasses         - github.com/TheLazyTomcat/Lib.AuxClasses
-    StrRect            - github.com/TheLazyTomcat/Lib.StrRect
-    ListSorters        - github.com/TheLazyTomcat/Lib.ListSorters
-    StaticMemoryStream - github.com/TheLazyTomcat/Lib.StaticMemoryStream
-    BinaryStreaming    - github.com/TheLazyTomcat/Lib.BinaryStreaming
-    MemoryBuffer       - github.com/TheLazyTomcat/Lib.MemoryBuffer
+    AuxTypes            - github.com/TheLazyTomcat/Lib.AuxTypes
+    AuxClasses          - github.com/TheLazyTomcat/Lib.AuxClasses
+    StrRect             - github.com/TheLazyTomcat/Lib.StrRect
+    ListSorters         - github.com/TheLazyTomcat/Lib.ListSorters
+    StaticMemoryStream  - github.com/TheLazyTomcat/Lib.StaticMemoryStream
+  * BinaryStreamingLite - github.com/TheLazyTomcat/Lib.BinaryStreamingLite
+    MemoryBuffer        - github.com/TheLazyTomcat/Lib.MemoryBuffer
+
+  BinaryStreamingLite can be replaced by full BinaryStreaming.
 
 ===============================================================================}
 
