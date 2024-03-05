@@ -11,7 +11,7 @@
 
   Version 1.1.2 (2021-11-22)
 
-  Last change 2024-02-03
+  Last change 2024-03-05
 
   ©2017-2024 František Milt
 
@@ -50,7 +50,7 @@
   {$DEFINE FPC_DisableWarns}
   {$MACRO ON}
 {$ELSE}
-  {$IF CompilerVersion >= 17 then}  // Delphi 2005+
+  {$IF CompilerVersion >= 17} // Delphi 2005+
     {$DEFINE CanInline}
   {$ELSE}
     {$UNDEF CanInline}
