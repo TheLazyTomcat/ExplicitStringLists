@@ -11,9 +11,9 @@
 
     Implementation of list of short strings.
 
-  Version 1.1.2 (2021-11-22)
+  Version 1.1.3 (2024-05-05)
 
-  Last change 2024-02-03
+  Last change 2024-05-05
 
   ©2017-2024 František Milt
 
@@ -32,15 +32,26 @@
       github.com/TheLazyTomcat/ExplicitStringLists
 
   Dependencies:
-    AuxTypes            - github.com/TheLazyTomcat/Lib.AuxTypes
     AuxClasses          - github.com/TheLazyTomcat/Lib.AuxClasses
-    StrRect             - github.com/TheLazyTomcat/Lib.StrRect
-    ListSorters         - github.com/TheLazyTomcat/Lib.ListSorters
-    StaticMemoryStream  - github.com/TheLazyTomcat/Lib.StaticMemoryStream
+  * AuxExceptions       - github.com/TheLazyTomcat/Lib.AuxExceptions
+    AuxTypes            - github.com/TheLazyTomcat/Lib.AuxTypes
   * BinaryStreamingLite - github.com/TheLazyTomcat/Lib.BinaryStreamingLite
+    ListSorters         - github.com/TheLazyTomcat/Lib.ListSorters
     MemoryBuffer        - github.com/TheLazyTomcat/Lib.MemoryBuffer
+    StaticMemoryStream  - github.com/TheLazyTomcat/Lib.StaticMemoryStream
+    StrRect             - github.com/TheLazyTomcat/Lib.StrRect
+
+  Library AuxExceptions is required only when rebasing local exception classes
+  (see symbol ExplicitStringLists_UseAuxExceptions for details).
 
   BinaryStreamingLite can be replaced by full BinaryStreaming.
+
+  Library AuxExceptions might also be required as an indirect dependency.
+
+  Indirect dependencies:
+    SimpleCPUID - github.com/TheLazyTomcat/Lib.SimpleCPUID
+    UInt64Utils - github.com/TheLazyTomcat/Lib.UInt64Utils
+    WinFileInfo - github.com/TheLazyTomcat/Lib.WinFileInfo
 
 ===============================================================================}
 unit ExplicitStringLists_Short;
