@@ -41,6 +41,7 @@
   BinaryStreamingLite can be replaced by full BinaryStreaming.
 
 ===============================================================================}
+{!tun_end!} // ignore this line
 {$IFDEF FPC}
   {$MODE ObjFPC}
   {$MODESWITCH CLASSICPROCVARS+}

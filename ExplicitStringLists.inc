@@ -44,6 +44,7 @@
   BinaryStreamingLite can be replaced by full BinaryStreaming.
 
 ===============================================================================}
+{!tun_end!} // ignore this line
 
 {$IFDEF ESL_ClassTypes}
 {===============================================================================
