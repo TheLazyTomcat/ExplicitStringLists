@@ -42,9 +42,9 @@
     records, are declared in ExplicitStringLists_Base or in respective units
     for each class.
 
-  Version 1.1.3 (2024-05-05)
+  Version 1.1.4 (2026-04-17)
 
-  Last change 2026-02-26
+  Last change 2026-04-17
 
   ©2017-2026 František Milt
 

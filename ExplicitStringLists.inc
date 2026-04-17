@@ -12,9 +12,9 @@
     Implementation template for all explicit string lists and delimited text
     parsers.
 
-  Version 1.1.3 (2024-05-05)
+  Version 1.1.4 (2026-04-17)
 
-  Last change 2026-02-26
+  Last change 2026-04-17
 
   ©2017-2026 František Milt
 
@@ -69,10 +69,10 @@
 ===============================================================================}
 // do not put "Type" here!
   TESLListItem = record
-    Str:      TESLStringType;
-    Obj:      TObject;
-    UserData: PtrInt;
-    Changed:  Boolean;
+    Str:          TESLStringType;
+    Obj:          TObject;
+    UserData:     PtrInt;
+    ChangeState:  TChangesTrackingState;
   end;
 {$ENDIF ESL_ClassTypes}
 
@@ -114,8 +114,7 @@
     procedure SetObject(Index: Integer; Value: TObject); override;
     Function GetItemUserData(Index: Integer): PtrInt; override;
     procedure SetItemUserData(Index: Integer; Value: PtrInt); override;
-    Function GetChanged(Index: Integer): Boolean; override;
-    procedure SetChanged(Index: Integer; Value: Boolean); override;
+    Function GetItemChangeStatePtr(Index: Integer): PChangesTrackingState; override;
     Function GetDefString(Index: Integer): String; override;
     procedure SetDefString(Index: Integer; const Value: String); override;
     Function GetName(Index: Integer): TESLStringType; virtual;
@@ -852,7 +851,7 @@ end;
 
 procedure TESLDelimitedTextParser.Parse(const Text: TESLLongStringType);
 begin
-fParsedString := {$IFDEF ELS_UCS4}ESL_StrAssing{$ENDIF}(Text);
+fParsedString := {$IFDEF ESL_UCS4}ESL_StrAssign{$ENDIF}(Text);
 Parse;
 end;
 
@@ -897,7 +896,7 @@ end;
 Function TESLClassType.GetString(Index: Integer): TESLStringType;
 begin
 If CheckIndex(Index) then
-  Result := {$IFDEF ELS_UCS4}ESL_StrAssing{$ENDIF}(fItems[Index].Str)
+  Result := {$IFDEF ESL_UCS4}ESL_StrAssign{$ENDIF}(fItems[Index].Str)
 else
   raise EESLIndexOutOfBounds.CreateFmt('%s.GetString: Index (%d) out of bounds.',[Self.ClassName,Index]);
 end;
@@ -909,7 +908,7 @@ begin
 If CheckIndex(Index) then
   begin
     DoItemChanging(Index);
-    fItems[Index].Str := {$IFDEF ELS_UCS4}ESL_StrAssing{$ENDIF}(Value);
+    fItems[Index].Str := {$IFDEF ESL_UCS4}ESL_StrAssign{$ENDIF}(Value);
     DoItemChange(Index);
   end
 else raise EESLIndexOutOfBounds.CreateFmt('%s.SetString: Index (%d) out of bounds.',[Self.ClassName,Index]);
@@ -965,22 +964,12 @@ end;
 
 //------------------------------------------------------------------------------
 
-Function TESLClassType.GetChanged(Index: Integer): Boolean;
+Function TESLClassType.GetItemChangeStatePtr(Index: Integer): PChangesTrackingState;
 begin
 If CheckIndex(Index) then
-  Result := fItems[Index].Changed
+  Result := Addr(fItems[Index].ChangeState)
 else
-  raise EESLIndexOutOfBounds.CreateFmt('%s.GetChanged: Index (%d) out of bounds.',[Self.ClassName,Index]);
-end;
-
-//------------------------------------------------------------------------------
-
-procedure TESLClassType.SetChanged(Index: Integer; Value: Boolean);
-begin
-If CheckIndex(Index) then
-  fItems[Index].Changed := Value
-else
-  raise EESLIndexOutOfBounds.CreateFmt('%s.SetChanged: Index (%d) out of bounds.',[Self.ClassName,Index]);
+  raise EESLIndexOutOfBounds.CreateFmt('%s.GetItemChangeStatePtr: Index (%d) out of bounds.',[Self.ClassName,Index]);
 end;
 
 //------------------------------------------------------------------------------
@@ -1418,7 +1407,7 @@ If Assigned(fItems[Index].Obj) and fOwnsObjects and CanFreeObj then
 else
   fItems[Index].Obj := nil;
 fItems[Index].UserData := 0;
-fItems[Index].Changed := False;
+fItems[Index].ChangeState := ChangesTrackingStateInit;
 end;
 
 //------------------------------------------------------------------------------
@@ -2016,7 +2005,7 @@ else Result := fCount;
 fItems[Result].Str := {$IFDEF ESL_UCS4}ESL_StrAssign{$ENDIF}(Str);
 fItems[Result].Obj := Obj;
 fItems[Result].UserData := 0;
-fItems[Result].Changed := False;
+fItems[Result].ChangeState := ChangesTrackingStateInit;
 Inc(fCount);
 DoListChange;
 end;
@@ -2197,10 +2186,10 @@ If not fSorted or not fStrictSorted then
         DoListChanging;
         For i := HighIndex downto Index do
           fItems[i + 1] := fItems[i];
-        fItems[Index].Str := {$IFDEF ELS_UCS4}ESL_StrAssign{$ENDIF}(Str);
+        fItems[Index].Str := {$IFDEF ESL_UCS4}ESL_StrAssign{$ENDIF}(Str);
         fItems[Index].Obj := Obj;
         fItems[Index].UserData := 0;
-        fItems[Index].Changed := False;
+        fItems[Index].ChangeState := ChangesTrackingStateInit;
         Inc(fCount);
         DoListChange;
       end
@@ -2489,7 +2478,7 @@ try
       // ensure local copy, do not replace system routines!
       SetLength(fItems[i].Str,Length(fItems[i].Str));
     {$ENDIF}
-      fItems[i].Changed := False;
+      fItems[i].ChangeState := ChangesTrackingStateInit;
     end;
   If fSorted then
     Sort;

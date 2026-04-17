@@ -11,9 +11,9 @@
 
     Implementation of list of UCS4 strings.
 
-  Version 1.1.3 (2024-05-05)
+  Version 1.1.4 (2026-04-17)
 
-  Last change 2026-02-26
+  Last change 2026-04-17
 
   ©2017-2026 František Milt
 
@@ -63,7 +63,7 @@ interface
 
 uses
   Classes,
-  AuxTypes,
+  AuxTypes, AuxClasses,
   ExplicitStringLists_Base;
 
 {$DEFINE ESL_UCS4}

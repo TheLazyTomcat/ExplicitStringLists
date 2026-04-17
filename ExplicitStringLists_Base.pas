@@ -12,9 +12,9 @@
     Base classes and types for all lists and utility classes (eg. delimited
     text parser).
 
-  Version 1.1.3 (2024-05-05)
+  Version 1.1.4 (2026-04-17)
 
-  Last change 2026-02-26
+  Last change 2026-04-17
 
   ©2017-2026 František Milt
 
@@ -126,44 +126,25 @@ type
   TExplicitStringList = class(TCustomListObject)
   protected
     // list data
-    fCount:                   Integer;
-    // updating/changing
-    fUpdateCount:             Integer;
-    fListChanged:             Boolean;
+    fCount:             Integer;
     // list settings
-    fOwnsObjects:             Boolean;
-    fCaseSensitive:           Boolean;  // affects sorting and searching
-    fDuplicates:              TDuplicates;
-    fSorted:                  Boolean;
-    fStrictSorted:            Boolean;
-    fStrictDelimiter:         Boolean;
-    fTrailingLineBreak:       Boolean;
+    fOwnsObjects:       Boolean;
+    fCaseSensitive:     Boolean;  // affects sorting and searching
+    fDuplicates:        TDuplicates;
+    fSorted:            Boolean;
+    fStrictSorted:      Boolean;
+    fStrictDelimiter:   Boolean;
+    fTrailingLineBreak: Boolean;
     // IO parameters
-    fFileSaveShareMode:       Word;
-    fFileLoadShareMode:       Word;
-    // change events
-    fOnItemChangingCallback:  TIndexCallback;
-    fOnItemChangingEvent:     TIndexEvent;
-    fOnItemChangeCallback:    TIndexCallback;
-    fOnItemChangeEvent:       TIndexEvent;
-    fOnListChangingCallback:  TNotifyCallback;
-    fOnListChangingEvent:     TNotifyEvent;
-    fOnListChangeCallback:    TNotifyCallback;
-    fOnListChangeEvent:       TNotifyEvent;
-    fOnChangingCallback:      TNotifyCallback;
-    fOnChangingEvent:         TNotifyEvent;
-    fOnChangeCallback:        TNotifyCallback;
-    fOnChangeEvent:           TNotifyEvent;
+    fFileSaveShareMode: Word;
+    fFileLoadShareMode: Word;
     // getters, setters
     Function GetObject(Index: Integer): TObject; virtual; abstract;
     procedure SetObject(Index: Integer; Value: TObject); virtual; abstract;
     Function GetItemUserData(Index: Integer): PtrInt; virtual; abstract;
     procedure SetItemUserData(Index: Integer; Value: PtrInt); virtual; abstract;
-    Function GetChanged(Index: Integer): Boolean; virtual; abstract;
-    procedure SetChanged(Index: Integer; Value: Boolean); virtual; abstract;
     Function GetDefString(Index: Integer): String; virtual; abstract;
     procedure SetDefString(Index: Integer; const Value: String); virtual; abstract;
-    Function GetUpdating: Boolean; virtual;
     procedure SetSorted(Value: Boolean); virtual;
     Function GetLineBreakStyle: TESLLineBreakStyle; virtual; abstract;
     procedure SetLineBreakStyle(Value: TESLLineBreakStyle); virtual; abstract;
@@ -174,13 +155,6 @@ type
     // list manipulation methods
     procedure SetArrayLength(NewLen: Integer); virtual; abstract;
     procedure ClearArrayItem(Index: Integer; CanFreeObj: Boolean = True); virtual; abstract;
-    // change events methods
-    procedure DoItemChanging(Index: Integer; CallChanging: Boolean = True); virtual;
-    procedure DoItemChange(Index: Integer; CallChange: Boolean = True); virtual;
-    procedure DoListChanging(CallChanging: Boolean = True); virtual;
-    procedure DoListChange(CallChange: Boolean = True); virtual;
-    procedure DoChanging; virtual;
-    procedure DoChange; virtual;
     // initialization, finalization methods
     procedure Initialize; virtual;
     procedure Finalize; virtual;
@@ -204,9 +178,6 @@ type
     class Function GetSystemEndianness: TESLStringEndianness; virtual;  // can only return seLittle or seBig, never seSystem
     constructor Create;
     destructor Destroy; override;
-    // update methods
-    Function BeginUpdate: Integer; virtual;
-    Function EndUpdate: Integer; virtual;
     // list index methods
     Function HighIndex: Integer; override;
     // list items methods
@@ -268,8 +239,7 @@ type
     property ItemUserData[Index: Integer]: PtrInt read GetItemUserData write SetItemUserData;
     property DefStrings[Index: Integer]: String read GetDefString write SetDefString;
     // updating properties
-    property Updating: Boolean read GetUpdating;
-    property UpdateCount: Integer read fUpdateCount;
+    property UpdateCount: Integer read fUpdateCounter;
     // settings properties
     property OwnsObjects: Boolean read fOwnsObjects write fOwnsObjects;
     property CaseSensitive: Boolean read fCaseSensitive write fCaseSensitive;
@@ -282,25 +252,6 @@ type
     // IO parameters
     property FileSaveShareMode: Word read fFileSaveShareMode write fFileSaveShareMode;
     property FileLoadShareMode: Word read fFileLoadShareMode write fFileLoadShareMode;
-    // change events properties
-    property OnItemChangingCallback: TIndexCallback read fOnItemChangingCallback write fOnItemChangingCallback;
-    property OnItemChangingEvent: TIndexEvent read fOnItemChangingEvent write fOnItemChangingEvent;
-    property OnItemChanging: TIndexEvent read fOnItemChangingEvent write fOnItemChangingEvent;
-    property OnItemChangeCallback: TIndexCallback read fOnItemChangeCallback write fOnItemChangeCallback;
-    property OnItemChangeEvent: TIndexEvent read fOnItemChangeEvent write fOnItemChangeEvent;
-    property OnItemChange: TIndexEvent read fOnItemChangeEvent write fOnItemChangeEvent;
-    property OnListChangingCallback: TNotifyCallback read fOnListChangingCallback write fOnListChangingCallback;
-    property OnListChangingEvent: TNotifyEvent read fOnListChangingEvent write fOnListChangingEvent;
-    property OnListChanging: TNotifyEvent read fOnListChangingEvent write fOnListChangingEvent;
-    property OnListChangeCallback: TNotifyCallback read fOnListChangeCallback write fOnListChangeCallback;
-    property OnListChangeEvent: TNotifyEvent read fOnListChangeEvent write fOnListChangeEvent;
-    property OnListChange: TNotifyEvent read fOnListChangeEvent write fOnListChangeEvent;
-    property OnChangingCallback: TNotifyCallback read fOnChangingCallback write fOnChangingCallback;
-    property OnChangingEvent: TNotifyEvent read fOnChangingEvent write fOnChangingEvent;
-    property OnChanging: TNotifyEvent read fOnChangingEvent write fOnChangingEvent;
-    property OnChangeCallback: TNotifyCallback read fOnChangeCallback write fOnChangeCallback;
-    property OnChangeEvent: TNotifyEvent read fOnChangeEvent write fOnChangeEvent;
-    property OnChange: TNotifyEvent read fOnChangeEvent write fOnChangeEvent;
   end;
 
 implementation
@@ -345,13 +296,6 @@ end;
 {-------------------------------------------------------------------------------
     TExplicitStringList - protected methods
 -------------------------------------------------------------------------------}
-
-Function TExplicitStringList.GetUpdating: Boolean;
-begin
-Result := fUpdateCount > 0;
-end;
-
-//------------------------------------------------------------------------------
 
 procedure TExplicitStringList.SetSorted(Value: Boolean);
 begin
@@ -437,90 +381,13 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TExplicitStringList.DoItemChanging(Index: Integer; CallChanging: Boolean = True);
-begin
-If CallChanging then
-  DoChanging;
-If Assigned(fOnItemChangingCallback) then
-  fOnItemChangingCallback(Self,Index)
-else If Assigned(fOnItemChangingEvent) then
-  fOnItemChangingEvent(Self,Index);
-end;
-
-//------------------------------------------------------------------------------
-
-procedure TExplicitStringList.DoItemChange(Index: Integer; CallChange: Boolean = True);
-begin
-SetChanged(Index,True);
-If fUpdateCount <= 0 then
-  begin
-    If Assigned(fOnItemChangeCallback) then
-      fOnItemChangeCallback(Self,Index)
-    else If Assigned(fOnItemChangeEvent) then
-      fOnItemChangeEvent(Self,Index);
-  end;
-If CallChange then
-  DoChange;
-end;
-
-//------------------------------------------------------------------------------
-
-procedure TExplicitStringList.DoListChanging(CallChanging: Boolean = True);
-begin
-If CallChanging then
-  DoChanging;
-If Assigned(fOnListChangingCallback) then
-  fOnListChangingCallback(Self)
-else If Assigned(fOnListChangingEvent) then
-  fOnListChangingEvent(Self);
-end;
-
-//------------------------------------------------------------------------------
-
-procedure TExplicitStringList.DoListChange(CallChange: Boolean = True);
-begin
-fListChanged := True;
-If fUpdateCount <= 0 then
-  begin
-    If Assigned(fOnListChangeCallback) then
-      fOnListChangeCallback(Self)
-    else If Assigned(fOnListChangeEvent) then
-      fOnListChangeEvent(Self);
-  end;
-If CallChange then
-  DoChange;
-end;
-
-//------------------------------------------------------------------------------
-
-procedure TExplicitStringList.DoChanging;
-begin
-If Assigned(fOnChangingCallback) then
-  fOnChangingCallback(Self)
-else If Assigned(fOnChangingEvent) then
-  fOnChangingEvent(Self);
-end;
-
-//------------------------------------------------------------------------------
-
-procedure TExplicitStringList.DoChange;
-begin
-If fUpdateCount <= 0 then
-  begin
-    If Assigned(fOnChangeCallback) then
-      fOnChangeCallback(Self)
-    else If Assigned(fOnChangeEvent) then
-      fOnChangeEvent(Self);
-  end;
-end;
-
-//------------------------------------------------------------------------------
-
 procedure TExplicitStringList.Initialize;
 begin
+// setup change propagation
+fPropagateListChanges := True;
+fPropagateItemChanges := prpToGlobal;
+// local fields
 fCount := 0;
-fUpdateCount := 0;
-fListChanged := False;
 fOwnsObjects := False;
 fCaseSensitive := False;
 fDuplicates := dupAccept;
@@ -536,19 +403,8 @@ end;
 
 procedure TExplicitStringList.Finalize;
 begin
-// prevent change events
-fOnItemChangingCallback := nil;
-fOnItemChangingEvent := nil;
-fOnItemChangeCallback := nil;
-fOnItemChangeEvent := nil;
-fOnListChangingCallback := nil;
-fOnListChangingEvent := nil;
-fOnListChangeCallback := nil;
-fOnListChangeEvent := nil;
-fOnChangingCallback := nil;
-fOnChangingEvent := nil;
-fOnChangeCallback := nil;
-fOnChangeEvent := nil;
+// prevent change reporting
+DisableChangeTracking := True;
 Clear;
 end;
 
@@ -690,47 +546,6 @@ destructor TExplicitStringList.Destroy;
 begin
 Finalize;
 inherited;
-end;
-
-//------------------------------------------------------------------------------
-
-Function TExplicitStringList.BeginUpdate: Integer;
-var
-  i:  Integer;
-begin
-If fUpdateCount <= 0 then
-  begin
-    fUpdateCount := 0;
-    For i := LowIndex to HighIndex do
-      SetChanged(i,False);
-    fListChanged := False;
-  end;
-Inc(fUpdateCount);
-Result := fUpdateCount;
-end;
-
-//------------------------------------------------------------------------------
-
-Function TExplicitStringList.EndUpdate: Integer;
-var
-  i:  Integer;
-begin
-Dec(fUpdateCount);
-If fUpdateCount <= 0 then
-  begin
-    fUpdateCount := 0;
-    For i := LowIndex to HighIndex do
-      If GetChanged(i) then
-        begin
-          DoItemChange(i);
-          SetChanged(i,False);
-        end;
-    If fListChanged then
-      DoListChange(False);
-    fListChanged := False;
-    DoChange;
-  end;
-Result := fUpdateCount;
 end;
 
 //------------------------------------------------------------------------------
